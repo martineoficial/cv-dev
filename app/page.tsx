@@ -3,6 +3,38 @@ import { useState, useEffect, useCallback } from 'react';
 import intialSkillsOptions from '@/app/data/data.json';
 import type { FormData, Experience, Education } from '@/app/types/types';
 import { MultiSelect } from './components/multi-select/multi-select';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { faker } from '@faker-js/faker';
+import { Switch } from '@/components/ui/switch';
+
+const FormSchema = z.object({
+  header: z.object({
+    fullName: z.string().min(2, {
+      message: "Full Name must be at least 2 characters.",
+    }),
+    title: z.string().min(2, {
+      message: "Title must be at least 2 characters.",
+    }),
+    email: z.string().email({
+      message: "Invalid email address.",
+    }),
+    phone: z.string().regex(/^\+55 \d{2} \d{5}-\d{4}$/, {
+      message: "Phone number must be in the format +55 81 99993-4299.",
+    }),
+    phoneIsWhatsapp: z.boolean(),
+    linkedinUsername: z.string().optional(),
+    githubUsername: z.string().optional(),
+    hasLinkedin: z.boolean(),
+    hasGithub: z.boolean(),
+  }),
+})
 
 export default function CVPage() {
   const [skillsOptions, setSkillsOptions] = useState<Record<string, Record<string, string[]>>>(intialSkillsOptions);
@@ -216,41 +248,30 @@ export default function CVPage() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => String(2000 + i)).reverse();
 
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      header: {
+        fullName: "",
+        title: "",
+        email: "",
+        phone: "",
+        phoneIsWhatsapp: false,
+        hasLinkedin: false,
+        hasGithub: false,
+        linkedinUsername: "",
+        githubUsername: "",
+      },
+    },
+  });
+
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    console.log(data);
+  }
+
   return (
     <div className="min-h-screen bg-[#0D0126] text-white p-6 flex flex-col md:flex-row">
-      <div className="max-w-2xl w-full md:w-1/2 pr-6 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-[#FF66C4] mb-6">cv.dev</h1>
-        <h2 className="text-2xl text-[#FF66C4] font-bold mb-4">Instruções</h2>
-        <p className="mb-4">Preencha os campos abaixo para gerar seu currículo em PDF. O preview será atualizado automaticamente.</p>
-
-        <div className="flex flex-col gap-4 mb-6">
-          <h2 className="text-2xl text-[#FF66C4] font-bold mb-2 md:col-span-2">Informações Pessoais</h2>
-          <input name="name" placeholder="Nome" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.name} />
-          <input name="title" placeholder="Título Profissional" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.title} />
-          <input name="email" placeholder="Email" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.email} />
-          <input name="phone" placeholder="Telefone: +99 99 99999-9999" pattern="^\+55 \d{2} \d{5}-\d{4}$" title="Formato: +55 81 99993-4299" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.phone} />
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" name="phoneIsWhatsapp" checked={formData.phoneIsWhatsapp} onChange={handleChange} className="accent-[#FF66C4]" />
-            <span>Número é WhatsApp</span>
-          </label>
-
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" name="hasLinkedin" checked={formData.hasLinkedin} onChange={handleChange} className="accent-[#FF66C4]" />
-            <span>Possui LinkedIn</span>
-          </label>
-          {formData.hasLinkedin && (
-            <input name="linkedinUsername" placeholder="LinkedIn Username" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.linkedinUsername} />
-          )}
-
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" name="hasGithub" checked={formData.hasGithub} onChange={handleChange} className="accent-[#FF66C4]" />
-            <span>Possui GitHub</span>
-          </label>
-          {formData.hasGithub && (
-            <input name="githubUsername" placeholder="GitHub Username" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.githubUsername} />
-          )}
-        </div>
-
+      {/*
         <div className="mt-4 flex flex-col gap-4">
           <div className="mb-4">
             <label className="block mb-1 text-[#FF66C4] font-bold">Sobre mim</label>
@@ -483,11 +504,185 @@ export default function CVPage() {
             Baixar PDF
           </button>
         </div>
-      </div>
+      </div> */}
+
+      <Carousel className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
+        <CarouselContent>
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Informações Pessoais
+                    </h1>
+                  </CardTitle>
+                  <CardDescription>
+                    <p>
+                      Preencha os campos abaixo para gerar seu currículo em PDF. O preview será atualizado automaticamente.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="header.fullName"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Full Name:</FormLabel>
+                            <FormControl>
+                              <Input
+                                name="name"
+                                placeholder={faker.person.fullName()}
+                                onChange={handleChange}
+                                value={formData.name}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="header.title"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Title:</FormLabel>
+                            <FormControl>
+                              <Input
+                                name="title"
+                                placeholder={faker.person.jobTitle()}
+                                onChange={handleChange}
+                                value={formData.title}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="header.email"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Email:</FormLabel>
+                            <FormControl>
+                              <Input
+                                name="email"
+                                placeholder={faker.internet.email()}
+                                onChange={handleChange}
+                                value={formData.email}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="header.phone"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Phone:</FormLabel>
+                            <FormControl>
+                              <Input
+                                name="phone"
+                                placeholder="+55 81 99993-4299"
+                                onChange={handleChange}
+                                value={formData.phone}
+                                pattern="^\+55 \d{2} \d{5}-\d{4}$"
+                                title="Formato: +55 81 99993-4299"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="header.phoneIsWhatsapp"
+                        render={() => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Switch
+                                name="phoneIsWhatsapp"
+                                checked={formData.phoneIsWhatsapp}
+                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, phoneIsWhatsapp: checked }))}
+                              />
+                            </FormControl>
+                            <FormLabel>Is WhatsApp</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="header.hasLinkedin"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                            <FormLabel>Has LinkedIn</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      {form.watch('header.hasLinkedin') && (
+                        <FormField
+                          control={form.control}
+                          name="header.linkedinUsername"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>LinkedIn Username:</FormLabel>
+                              <FormControl>
+                                <Input placeholder={faker.internet.username()} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      <FormField
+                        control={form.control}
+                        name="header.hasGithub"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                            <FormLabel>Has GitHub</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      {form.watch('header.hasGithub') && (
+                        <FormField
+                          control={form.control}
+                          name="header.githubUsername"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>GitHub Username:</FormLabel>
+                              <FormControl>
+                                <Input placeholder={faker.internet.username()} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
 
       {pdfPreviewUrl && (
-        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
-          <h2 className="text-2xl text-[#FF66C4] font-bold mb-4">Preview do Currículo</h2>
+        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[92vh] md:sticky md:top-0">
           <div className="border border-gray-300 rounded overflow-hidden h-full">
             <iframe
               src={pdfPreviewUrl}
