@@ -1,4 +1,4 @@
-export interface Experience {
+export type Experience = {
     company: string;
     title: string;
     startDate: { month: string; year: string };
@@ -7,7 +7,7 @@ export interface Experience {
     isCurrent?: boolean;
 }
 
-export interface Education {
+export type Education = {
     institution: string;
     degree: string;
     startDate: { month: string; year: string };
@@ -15,7 +15,7 @@ export interface Education {
     description?: string;
 }
 
-export interface FormData {
+export type FormData = {
     name: string;
     title: string;
     email: string;
