@@ -34,6 +34,41 @@ const FormSchema = z.object({
     hasLinkedin: z.boolean(),
     hasGithub: z.boolean(),
   }),
+  content: z.object({
+    sections: z.object({
+      'Sobre mim': z.string().optional(),
+      'Soft Skills': z.string().optional(),
+      'Diferenciais': z.string().optional(),
+    }),
+    experience: z.array(z.object({
+      company: z.string().optional(),
+      title: z.string().optional(),
+      startDate: z.object({
+        month: z.string().optional(),
+        year: z.string().optional(),
+      }),
+      endDate: z.union([z.object({
+        month: z.string().optional(),
+        year: z.string().optional(),
+      }), z.literal('Atual')]),
+      description: z.string().optional(),
+      isCurrent: z.boolean(),
+    })),
+    education: z.array(z.object({
+      institution: z.string().optional(),
+      degree: z.string().optional(),
+      startDate: z.object({
+        month: z.string().optional(),
+        year: z.string().optional(),
+      }),
+      endDate: z.union([z.object({
+        month: z.string().optional(),
+        year: z.string().optional(),
+      }), z.literal('Atual')]),
+      description: z.string().optional(),
+    })),
+    skills: z.record(z.record(z.array(z.string()))),
+  }),
 })
 
 export default function CVPage() {
@@ -80,6 +115,51 @@ export default function CVPage() {
       ])
     ) as FormData['skills'],
   });
+
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      header: {
+        fullName: "",
+        title: "",
+        email: "",
+        phone: "",
+        phoneIsWhatsapp: false,
+        hasLinkedin: false,
+        hasGithub: false,
+        linkedinUsername: "",
+        githubUsername: "",
+      },
+      content: {
+        sections: {
+          'Sobre mim': "",
+          'Soft Skills': "",
+          'Diferenciais': "",
+        },
+        experience: [
+          {
+            company: "",
+            title: "",
+            startDate: { month: "", year: "" },
+            endDate: { month: "", year: "" },
+            description: "",
+            isCurrent: false,
+          }
+        ],
+        education: [
+          {
+            institution: "",
+            degree: "",
+            startDate: { month: "", year: "" },
+            endDate: { month: "", year: "" },
+            description: ""
+          }
+        ],
+        skills: {},
+      }
+    },
+  });
+
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -87,7 +167,7 @@ export default function CVPage() {
     setFormData(prev => {
       if (type === 'checkbox') {
         return { ...prev, [name]: checked };
-      } else if (name in prev.sections) {
+      } else if (type === 'textarea') {
         return { ...prev, sections: { ...prev.sections, [name]: value } };
       } else {
         return { ...prev, [name]: value };
@@ -217,22 +297,23 @@ export default function CVPage() {
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(form.control._formValues),
+      // body: JSON.stringify(formData),
     });
+    console.log('response', response);
 
     const blob = await response.blob();
 
     const url = window.URL.createObjectURL(blob);
-    console.log('url', url);
     setPdfPreviewUrl(url);
   }, [formData]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       generatePdf();
-    }, 500); // 500ms de delay após a última mudança
+    }, 500);
 
-    return () => clearTimeout(timeoutId); // Limpa o timeout se o componente for desmontado ou formData mudar antes do timeout
+    return () => clearTimeout(timeoutId);
   }, [formData, generatePdf]);
 
   const handleDownload = () => {
@@ -247,23 +328,6 @@ export default function CVPage() {
   const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => String(2000 + i)).reverse();
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      header: {
-        fullName: "",
-        title: "",
-        email: "",
-        phone: "",
-        phoneIsWhatsapp: false,
-        hasLinkedin: false,
-        hasGithub: false,
-        linkedinUsername: "",
-        githubUsername: "",
-      },
-    },
-  });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     console.log(data);
