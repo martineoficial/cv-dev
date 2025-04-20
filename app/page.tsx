@@ -1,9 +1,12 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react';
-import skillsOptions from '@/app/data/data.json';
+import intialSkillsOptions from '@/app/data/data.json';
 import type { FormData, Experience, Education } from '@/app/types/types';
+import { MultiSelect } from './components/multi-select/multi-select';
 
 export default function CVPage() {
+  const [skillsOptions, setSkillsOptions] = useState<Record<string, Record<string, string[]>>>(intialSkillsOptions);
+
   const [formData, setFormData] = useState<FormData>({
     name: '',
     title: '',
@@ -75,6 +78,39 @@ export default function CVPage() {
       };
     });
   }
+
+  const handleSkillChange = (category: string, subcategory: string, selectedSkills: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      skills: {
+        ...prev.skills,
+        [category]: {
+          ...prev.skills[category],
+          [subcategory]: selectedSkills,
+        },
+      },
+    }));
+  };
+
+  const handleNewSkill = (category: string, subcategory: string, newSkill: string) => {
+    setSkillsOptions(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [subcategory]: [...(prev[category][subcategory] || []), newSkill],
+      },
+    }));
+    setFormData(prev => ({
+      ...prev,
+      skills: {
+        ...prev.skills,
+        [category]: {
+          ...prev.skills[category],
+          [subcategory]: [...prev.skills[category][subcategory], newSkill],
+        },
+      },
+    }));
+  };
 
   const handleExperienceChange = (index: number, field: keyof Experience, value: string | { month: string; year: string } | 'Atual' | boolean) => {
     setFormData(prev => {
@@ -229,20 +265,22 @@ export default function CVPage() {
                 {Object.entries(subcategories).map(([subcategory, options]) => (
                   <div key={subcategory} className="mb-3">
                     <label className="block mb-1 font-medium italic">{subcategory}</label>
-                    <div className="flex flex-wrap gap-2">
-                      {options.map(option => (
-                        <label key={option} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            value={option}
-                            checked={formData.skills[category]?.[subcategory]?.includes(option)}
-                            onChange={() => handleSkillCheckboxChange(category, subcategory, option)}
-                            className="accent-[#FF66C4]"
-                          />
-                          <span>{option}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <MultiSelect
+                      options={
+                        options.map(option => ({
+                          value: option,
+                          label: option,
+                        }))
+                      }
+                      defaultValue={formData.skills[category]?.[subcategory]}
+                      onValueChange={(selectedOptions) => {
+                        const selectedValues = selectedOptions.map(option => option.valueOf());
+                        handleSkillChange(category, subcategory, selectedValues);
+                      }}
+                      onNewOption={(newOption) => {
+                        handleNewSkill(category, subcategory, newOption);
+                      }}
+                    />
                   </div>
                 ))}
               </div>
