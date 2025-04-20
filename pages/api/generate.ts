@@ -1,9 +1,13 @@
+import { FormDataSchema } from '@/app/schemas/FormDataSchema';
+import type { FormData } from '@/app/types/types';
+import { capitalizeAllWords } from '@/app/utils/capitalize';
 import fs from 'fs';
+import { LogOutIcon } from 'lucide-react';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 import PDFDocument from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
-
+import { Content } from 'pdfmake/interfaces';
 
 PDFDocument.vfs = pdfFonts.vfs;
 
@@ -29,266 +33,96 @@ export default async function handler(
 ) {
     if (req.method === 'POST') {
         try {
-            console.clear();
-            console.log('Gerando PDF...');
-            console.log('Dados recebidos:', req.body);
-            const formData = req.body;
-            
-            const content = [];
+            const validationResult = FormDataSchema.safeParse(req.body);
 
-            if (formData.name) {
-                content.push({ text: formData.name, style: 'header' });
+            if (!validationResult.success) {
+                console.error('Erro de validação:', validationResult.error);
+                return res.status(400).json({ error: 'Dados inválidos' });
             }
-            // if (formData.title) {
-            //     content.push({ text: formData.title, style: 'subheader' });
-            // }
 
-            // const contactInfo = [];
-            // if (formData.email) {
-            //     contactInfo.push({
-            //         text: formData.email,
-            //         style: 'contactInfo',
-            //         link: `mailto:${formData.email}`,
-            //     });
-            // }
-            // if (formData.phone) {
-            //     const phoneNumber = formData.phone.replace(/[\s-()]/g, '');
-            //     if (formData.phoneIsWhatsapp) {
-            //         contactInfo.push({
-            //             text: formData.phone,
-            //             style: 'contactInfo',
-            //             link: `https://wa.me/${phoneNumber}`,
-            //         });
-            //     } else {
-            //         contactInfo.push({
-            //             text: formData.phone,
-            //             style: 'contactInfo',
-            //         });
-            //     }
-            // }
-            // if (formData.hasLinkedin && formData.linkedinUsername) {
-            //     const linkedinUrl = `https://linkedin.com/in/${formData.linkedinUsername}`;
-            //     contactInfo.push({
-            //         text: `linkedin.com/in/${formData.linkedinUsername}`,
-            //         style: 'contactInfo',
-            //         link: linkedinUrl,
-            //     });
-            // }
-            // if (formData.hasGithub && formData.githubUsername) {
-            //     const githubUrl = `https://github.com/${formData.githubUsername}`;
-            //     contactInfo.push({
-            //         text: `github.com/${formData.githubUsername}`,
-            //         style: 'contactInfo',
-            //         link: githubUrl,
-            //     });
-            // }
-            // if (contactInfo.length > 0) {
-            //     content.push({ stack: contactInfo, margin: [0, 0, 0, 0] });
-            // }
+            const formData: FormData = validationResult.data;
 
-            // if (formData.sections['Sobre mim']) {
-            //     content.push({ text: 'Sobre mim', style: 'sectionHeader' });
-            //     content.push({ text: formData.sections['Sobre mim'] });
-            // }
+            const pdfContent: Content[] = [];
 
-            // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            // const skillsContent = [] as any;
-            // if (formData.skills) {
-            //     Object.entries(formData.skills).forEach(([category, subcategories]) => {
-            //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //         const categorySkills = [] as any;
-            //         Object.entries(subcategories || {}).forEach(([subcategory, skills]) => {
-            //             if (skills && skills.length > 0) {
-            //                 categorySkills.push({ text: `${subcategory}: ${skills.join(', ')}`, style: 'skillSubcategoryText' });
-            //             }
-            //         });
-            //         if (categorySkills.length > 0) {
-            //             skillsContent.push({ text: category, style: 'skillCategory' });
-            //             skillsContent.push({ stack: categorySkills, margin: [10, 0, 0, 5] });
-            //         }
-            //     });
-            // }
-            // if (skillsContent.length > 0) {
-            //     content.push({ text: 'Habilidades Técnicas', style: 'sectionHeader' });
-            //     content.push(...skillsContent);
-            // }
+            if (formData.contactInfo.fullName) {
+                pdfContent.push({
+                    text: capitalizeAllWords(formData.contactInfo.fullName),
+                    style: 'fullName',
+                });
+            }
 
-            // if (formData.experience && formData.experience.length > 0) {
-            //     const experienceContent = formData.experience
-            //         .filter(
-            //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //             (exp: any) =>
-            //                 exp.company ||
-            //                 exp.title ||
-            //                 (exp.startDate && exp.startDate.month && exp.startDate.year) ||
-            //                 (exp.endDate && (exp.endDate === 'Atual' || (exp.endDate.month && exp.endDate.year))) ||
-            //                 exp.description
-            //         )
-            //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //         .map((exp: any) => {
-            //             const parts = [];
-            //             if (exp.company) parts.push({ text: exp.company, style: 'experienceCompany' });
-            //             if (exp.title) parts.push({ text: exp.title, style: 'experienceTitle' });
-            //             const startDateValid = exp.startDate && exp.startDate.month && exp.startDate.year;
-            //             const endDateValid =
-            //                 exp.endDate && (exp.endDate === 'Atual' || (exp.endDate.month && exp.endDate.year));
-            //             if (startDateValid || endDateValid) {
-            //                 const startDate = startDateValid ? `${exp.startDate.month}/${exp.startDate.year}` : '';
-            //                 const endDate = endDateValid
-            //                     ? exp.endDate === 'Atual'
-            //                         ? 'Atual'
-            //                         : `${exp.endDate.month}/${exp.endDate.year}`
-            //                     : '';
-            //                 const period = `${startDate}${startDateValid && endDateValid ? ' - ' : ''}${endDate}`;
-            //                 if (period) parts.push({ text: period, style: 'experiencePeriod' });
-            //             }
-            //             if (exp.description)
-            //                 parts.push({ text: exp.description, style: 'experienceDescription', margin: [0, 5, 0, 10] });
-            //             return parts.length > 0 ? parts : null;
-            //         })
-            //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //         .filter((item: any) => item !== null)
-            //         .flat();
+            if (formData.contactInfo.title) {
+                pdfContent.push({
+                    text: capitalizeAllWords(formData.contactInfo.title),
+                    style: 'title',
+                });
+            }
 
-            //     if (experienceContent.length > 0) {
-            //         content.push({ text: 'Experiência Profissional', style: 'sectionHeader' });
-            //         content.push(...experienceContent);
-            //     }
+            if (formData.contactInfo.email) {
+                pdfContent.push({
+                    text: formData.contactInfo.email,
+                    style: 'contacts',
+                    link: `mailto:${formData.contactInfo.email}`,
+                });
+            }
+
+            if (formData.contactInfo.phone) {
+                pdfContent.push({
+                    text: formData.contactInfo.phone,
+                    style: 'contacts',
+                    link: formData.contactInfo.phoneIsWhatsapp
+                        ? `https://wa.me/${formData.contactInfo.phone}`
+                        : `tel:${formData.contactInfo.phone}`,
+                });
+            }
+
+            if (formData.contactInfo.linkedinUsername) {
+                pdfContent.push({
+                    text: `LinkedIn: ${formData.contactInfo.linkedinUsername}`,
+                    style: 'contacts',
+                    link: `https://www.linkedin.com/in/${formData.contactInfo.linkedinUsername}`,
+                });
+            }
+            
+            if (formData.contactInfo.githubUsername) {
+                pdfContent.push({
+                    text: `GitHub: ${formData.contactInfo.githubUsername}`,
+                    style: 'contacts',
+                    link: `https://github.com/${formData.contactInfo.githubUsername}`,
+                });
+            }
+
+            // TODO: Adicione aqui a lógica para incluir outros campos no pdfContent,
+            // como título, email, seções de conteúdo ('Sobre mim', etc.), experiências, educação, skills.
+            // Exemplo (apenas para ilustrar onde adicionar):
+            // if (formData.contactInfo.title) {
+            //     pdfContent.push({ text: formData.contactInfo.title, style: 'titleStyle' }); // Crie 'titleStyle' nos styles
             // }
-
-            // if (formData.education && formData.education.length > 0) {
-            //     const educationContent = formData.education
-            //         .filter(
-            //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //             (edu: any) =>
-            //                 edu.institution ||
-            //                 edu.degree ||
-            //                 (edu.startDate && edu.startDate.month && edu.startDate.year) ||
-            //                 (edu.endDate && (edu.endDate === 'Atual' || (edu.endDate.month && edu.endDate.year)))
-            //         )
-            //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //         .map((edu: any) => {
-            //             const parts = [];
-            //             if (edu.institution) parts.push({ text: edu.institution, style: 'educationInstitution' });
-            //             if (edu.degree) parts.push({ text: edu.degree, style: 'educationDegree' });
-            //             const startDateValid = edu.startDate && edu.startDate.month && edu.startDate.year;
-            //             const endDateValid =
-            //                 edu.endDate && (edu.endDate === 'Atual' || (edu.endDate.month && edu.endDate.year));
-            //             if (startDateValid || endDateValid) {
-            //                 const startDate = startDateValid ? `${edu.startDate.month}/${edu.startDate.year}` : '';
-            //                 const endDate = endDateValid
-            //                     ? edu.endDate === 'Atual'
-            //                         ? 'Atual'
-            //                         : `${edu.endDate.month}/${edu.endDate.year}`
-            //                     : '';
-            //                 const period = `${startDate}${startDateValid && endDateValid ? ' - ' : ''}${endDate}`;
-            //                 if (period) parts.push({ text: period, style: 'educationPeriod' });
-            //             }
-            //             if (edu.description)
-            //                 parts.push({ text: edu.description, style: 'educationDescription', margin: [0, 5, 0, 10] });
-            //             return parts.length > 0 ? parts : null;
-            //         })
-            //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //         .filter((item: any) => item !== null)
-            //         .flat();
-
-            //     if (educationContent.length > 0) {
-            //         content.push({ text: 'Formação Acadêmica', style: 'sectionHeader' });
-            //         content.push(...educationContent);
-            //     }
+            // if (formData.content.sections['Sobre mim']) {
+            //      pdfContent.push({ text: 'Sobre mim', style: 'sectionTitle' }); // Crie 'sectionTitle' nos styles
+            //      pdfContent.push({ text: formData.content.sections['Sobre mim'], style: 'sectionContent' }); // Crie 'sectionContent' nos styles
             // }
+            // ... e assim por diante para as experiências, educação, skills, etc.
 
-            // if (formData.sections['Soft Skills']) {
-            //     content.push({ text: 'Soft Skills', style: 'sectionHeader' });
-            //     content.push({ text: formData.sections['Soft Skills'] });
-            // }
-
-            // if (formData.sections['Diferenciais']) {
-            //     content.push({ text: 'Diferenciais', style: 'sectionHeader' });
-            //     content.push({ text: formData.sections['Diferenciais'] });
-            // }
 
             const pdfDoc = PDFDocument.createPdf({
-                content: content,
+                content: pdfContent,
                 styles: {
-                    header: {
+                    fullName: {
                         fontSize: 24,
                         bold: true,
                         margin: [0, 0, 0, 8],
-                        color: '#0D0126',
                     },
-                    subheader: {
-                        fontSize: 16,
-                        bold: false,
-                        margin: [0, 0, 0, 10],
-                        color: '#FF66C4',
-                    },
-                    sectionHeader: {
-                        fontSize: 16,
-                        bold: true,
-                        margin: [0, 15, 0, 8],
-                        color: '#FF66C4',
-                    },
-                    contactInfo: {
-                        fontSize: 10,
-                        marginBottom: 2,
-                        color: '#1A1038',
-                    },
-                    experienceCompany: {
-                        fontSize: 12,
-                        bold: true,
-                        color: '#1A1038',
-                        margin: [0, 5, 0, 0],
-                    },
-                    experienceTitle: {
-                        fontSize: 11,
+                    title: {
+                        fontSize: 18,
                         italics: true,
-                        color: '#1A1038',
-                        margin: [0, 3, 0, 0],
-                    },
-                    experiencePeriod: {
-                        fontSize: 10,
-                        color: '#777',
-                        margin: [0, 2, 0, 5],
-                    },
-                    experienceDescription: {
-                        fontSize: 10,
-                        color: '#333',
                         margin: [0, 0, 0, 8],
                     },
-                    educationInstitution: {
+                    contacts: {
                         fontSize: 12,
-                        bold: true,
-                        color: '#1A1038',
-                        margin: [0, 5, 0, 0],
-                    },
-                    educationDegree: {
-                        fontSize: 11,
-                        italics: true,
-                        color: '#1A1038',
-                        margin: [0, 3, 0, 0],
-                    },
-                    educationPeriod: {
-                        fontSize: 10,
-                        color: '#777',
-                        margin: [0, 2, 0, 5],
-                    },
-                    educationDescription: {
-                        fontSize: 10,
-                        color: '#333',
                         margin: [0, 0, 0, 8],
                     },
-                    skillCategory: {
-                        fontSize: 14,
-                        bold: true,
-                        margin: [0, 10, 0, 5],
-                        color: '#1A1038',
-                    },
-                    skillSubcategoryText: {
-                        fontSize: 11,
-                        margin: [0, 2, 0, 2],
-                        color: '#333',
-                    },
+                    // TODO: Adicione aqui outros estilos que você precisar (sectionTitle, sectionContent, etc.)
                 },
                 defaultStyle: {
                     fontSize: 11,
@@ -302,9 +136,11 @@ export default async function handler(
                 res.setHeader('Content-Disposition', 'attachment; filename=curriculo.pdf');
                 res.send(buffer);
             });
+
         } catch (error) {
             console.error('Erro ao gerar o PDF:', error);
-            res.status(500).send('Erro ao gerar o PDF');
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            res.status(500).json({ error: 'Erro ao gerar o PDF', details: errorMessage });
         }
     } else {
         res.setHeader('Allow', ['POST']);

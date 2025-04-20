@@ -1,295 +1,45 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react';
 import intialSkillsOptions from '@/app/data/data.json';
-import type { FormData, Experience, Education } from '@/app/types/types';
-import { MultiSelect } from './components/multi-select/multi-select';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { FormDataSchema } from './schemas/FormDataSchema';
 import { faker } from '@faker-js/faker';
 import { Switch } from '@/components/ui/switch';
 
-const FormSchema = z.object({
-  header: z.object({
-    fullName: z.string().min(2, {
-      message: "Full Name must be at least 2 characters.",
-    }),
-    title: z.string().min(2, {
-      message: "Title must be at least 2 characters.",
-    }),
-    email: z.string().email({
-      message: "Invalid email address.",
-    }),
-    phone: z.string().regex(/^\+55 \d{2} \d{5}-\d{4}$/, {
-      message: "Phone number must be in the format +55 81 99993-4299.",
-    }),
-    phoneIsWhatsapp: z.boolean(),
-    linkedinUsername: z.string().optional(),
-    githubUsername: z.string().optional(),
-    hasLinkedin: z.boolean(),
-    hasGithub: z.boolean(),
-  }),
-  content: z.object({
-    sections: z.object({
-      'Sobre mim': z.string().optional(),
-      'Soft Skills': z.string().optional(),
-      'Diferenciais': z.string().optional(),
-    }),
-    experience: z.array(z.object({
-      company: z.string().optional(),
-      title: z.string().optional(),
-      startDate: z.object({
-        month: z.string().optional(),
-        year: z.string().optional(),
-      }),
-      endDate: z.union([z.object({
-        month: z.string().optional(),
-        year: z.string().optional(),
-      }), z.literal('Atual')]),
-      description: z.string().optional(),
-      isCurrent: z.boolean(),
-    })),
-    education: z.array(z.object({
-      institution: z.string().optional(),
-      degree: z.string().optional(),
-      startDate: z.object({
-        month: z.string().optional(),
-        year: z.string().optional(),
-      }),
-      endDate: z.union([z.object({
-        month: z.string().optional(),
-        year: z.string().optional(),
-      }), z.literal('Atual')]),
-      description: z.string().optional(),
-    })),
-    skills: z.record(z.record(z.array(z.string()))),
-  }),
-})
-
 export default function CVPage() {
-  const [skillsOptions, setSkillsOptions] = useState<Record<string, Record<string, string[]>>>(intialSkillsOptions);
-
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    title: '',
-    email: '',
-    phone: '',
-    phoneIsWhatsapp: false,
-    linkedinUsername: '',
-    githubUsername: '',
-    hasLinkedin: false,
-    hasGithub: false,
-    sections: {
-      'Sobre mim': ``,
-      'Soft Skills': ``,
-      'Diferenciais': ``,
-    },
-    experience: [
-      {
-        company: '',
-        title: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: ``,
-        isCurrent: false,
-      }
-    ],
-    education: [
-      {
-        institution: '',
-        degree: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: ''
-      }
-    ],
-    skills: Object.fromEntries(
-      Object.entries(skillsOptions).map(([category, subcategories]) => [
-        category,
-        Object.fromEntries(Object.keys(subcategories).map(sub => [sub, []]))
-      ])
-    ) as FormData['skills'],
-  });
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const form = useForm({
+    resolver: zodResolver(FormDataSchema),
     defaultValues: {
-      header: {
-        fullName: "",
-        title: "",
-        email: "",
-        phone: "",
+      contactInfo: {
+        fullName: '',
+        title: '',
+        email: '',
+        phone: '',
         phoneIsWhatsapp: false,
+        linkedinUsername: '',
+        githubUsername: '',
         hasLinkedin: false,
         hasGithub: false,
-        linkedinUsername: "",
-        githubUsername: "",
       },
       content: {
         sections: {
-          'Sobre mim': "",
-          'Soft Skills': "",
-          'Diferenciais': "",
+          'Sobre mim': '',
+          'Soft Skills': '',
+          'Diferenciais': '',
         },
-        experience: [
-          {
-            company: "",
-            title: "",
-            startDate: { month: "", year: "" },
-            endDate: { month: "", year: "" },
-            description: "",
-            isCurrent: false,
-          }
-        ],
-        education: [
-          {
-            institution: "",
-            degree: "",
-            startDate: { month: "", year: "" },
-            endDate: { month: "", year: "" },
-            description: ""
-          }
-        ],
-        skills: {},
-      }
+        experience: [],
+        education: [],
+        skills: intialSkillsOptions,
+      },
     },
   });
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement
-    setFormData(prev => {
-      if (type === 'checkbox') {
-        return { ...prev, [name]: checked };
-      } else if (type === 'textarea') {
-        return { ...prev, sections: { ...prev.sections, [name]: value } };
-      } else {
-        return { ...prev, [name]: value };
-      }
-    });
-  }
-
-  const handleSkillCheckboxChange = (category: string, subcategory: string, skill: string) => {
-    setFormData(prev => {
-      const currentSkills = prev.skills[category][subcategory] || [];
-      const updatedSkills = currentSkills.includes(skill)
-        ? currentSkills.filter(s => s !== skill)
-        : [...currentSkills, skill];
-      return {
-        ...prev,
-        skills: {
-          ...prev.skills,
-          [category]: { ...prev.skills[category], [subcategory]: updatedSkills },
-        },
-      };
-    });
-  }
-
-  const handleSkillChange = (category: string, subcategory: string, selectedSkills: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: {
-        ...prev.skills,
-        [category]: {
-          ...prev.skills[category],
-          [subcategory]: selectedSkills,
-        },
-      },
-    }));
-  };
-
-  const handleNewSkill = (category: string, subcategory: string, newSkill: string) => {
-    setSkillsOptions(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [subcategory]: [...(prev[category][subcategory] || []), newSkill],
-      },
-    }));
-    setFormData(prev => ({
-      ...prev,
-      skills: {
-        ...prev.skills,
-        [category]: {
-          ...prev.skills[category],
-          [subcategory]: [...prev.skills[category][subcategory], newSkill],
-        },
-      },
-    }));
-  };
-
-  const handleExperienceChange = (index: number, field: keyof Experience, value: string | { month: string; year: string } | 'Atual' | boolean) => {
-    setFormData(prev => {
-      const newExperience = [...prev.experience];
-      if (field === 'isCurrent' && typeof value === 'boolean') {
-        newExperience[index].isCurrent = value;
-        if (value) {
-          newExperience[index].endDate = 'Atual';
-        } else if (newExperience[index].endDate === 'Atual') {
-          newExperience[index].endDate = { month: '', year: '' };
-        }
-      } else {
-        (newExperience[index][field] as typeof value) = value;
-      }
-      return { ...prev, experience: newExperience };
-    });
-  };
-
-  const addExperience = () => {
-    setFormData(prev => ({
-      ...prev,
-      experience: [...prev.experience, {
-        company: '',
-        title: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: '',
-        isCurrent: false,
-      }]
-    }));
-  };
-
-  const removeExperience = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      experience: prev.experience.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleEducationChange = (index: number, field: keyof Education, value: string | { month: string; year: string } | 'Atual' | undefined) => {
-    setFormData(prev => {
-      const newEducation = [...prev.education];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      newEducation[index][field] = value as any; // Type assertion
-      return { ...prev, education: newEducation };
-    });
-  };
-
-  const addEducation = () => {
-    setFormData(prev => ({
-      ...prev,
-      education: [...prev.education, {
-        institution: '',
-        degree: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: ''
-      }]
-    }));
-  };
-
-  const removeEducation = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      education: prev.education.filter((_, i) => i !== index)
-    }));
-  };
 
   const generatePdf = useCallback(async () => {
     setPdfPreviewUrl(null);
@@ -297,279 +47,30 @@ export default function CVPage() {
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.control._formValues),
-      // body: JSON.stringify(formData),
+      body: JSON.stringify(form.getValues()),
     });
     console.log('response', response);
 
-    const blob = await response.blob();
+    const blob = await response.blob()
+    console.log('blob', blob);
 
     const url = window.URL.createObjectURL(blob);
+    console.log('url', url);
+
     setPdfPreviewUrl(url);
-  }, [formData]);
+  }, [form]);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    console.clear();
+    const subscription = form.watch((value) => {
+      console.log('Form values changed:', value);
       generatePdf();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [formData, generatePdf]);
-
-  const handleDownload = () => {
-    if (pdfPreviewUrl) {
-      const link = document.createElement('a');
-      link.href = pdfPreviewUrl;
-      link.download = 'curriculo.pdf';
-      link.click();
-    }
-  };
-
-  const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => String(2000 + i)).reverse();
-
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data);
-  }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, generatePdf]);
 
   return (
     <div className="min-h-screen bg-[#0D0126] text-white p-6 flex flex-col md:flex-row">
-      {/*
-        <div className="mt-4 flex flex-col gap-4">
-          <div className="mb-4">
-            <label className="block mb-1 text-[#FF66C4] font-bold">Sobre mim</label>
-            <textarea name="Sobre mim" rows={4} className="w-full p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.sections['Sobre mim']} />
-          </div>
-
-          <div className="mb-4">
-            <h2 className="text-2xl text-[#FF66C4] font-bold mb-2">Habilidades Técnicas</h2>
-            {Object.entries(skillsOptions).map(([category, subcategories]) => (
-              <div key={category} className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">{category}</h3>
-                {Object.entries(subcategories).map(([subcategory, options]) => (
-                  <div key={subcategory} className="mb-3">
-                    <label className="block mb-1 font-medium italic">{subcategory}</label>
-                    <MultiSelect
-                      options={
-                        options.map(option => ({
-                          value: option,
-                          label: option,
-                        }))
-                      }
-                      defaultValue={formData.skills[category]?.[subcategory]}
-                      onValueChange={(selectedOptions) => {
-                        const selectedValues = selectedOptions.map(option => option.valueOf());
-                        handleSkillChange(category, subcategory, selectedValues);
-                      }}
-                      onNewOption={(newOption) => {
-                        handleNewSkill(category, subcategory, newOption);
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <div className="mb-4">
-            <h2 className="text-2xl text-[#FF66C4] font-bold mb-2">Experiência Profissional</h2>
-            {formData.experience.map((exp, index) => (
-              <div key={index} className="mb-4 p-4 border border-gray-300 rounded">
-                <h3 className="text-xl font-semibold mb-2">Experiência {index + 1}</h3>
-                <div className="flex flex-col gap-4">
-                  <input
-                    type="text"
-                    placeholder="Companhia/Empresa"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={exp.company}
-                    onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Cargo"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={exp.title}
-                    onChange={(e) => handleExperienceChange(index, 'title', e.target.value)}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.startDate.month}
-                      onChange={(e) => handleExperienceChange(index, 'startDate', { ...exp.startDate, month: e.target.value })}
-                    >
-                      <option value="" disabled>Mês Início</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.startDate.year}
-                      onChange={(e) => handleExperienceChange(index, 'startDate', { ...exp.startDate, year: e.target.value })}
-                    >
-                      <option value="" disabled>Ano Início</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.endDate === 'Atual' ? 'Atual' : (typeof exp.endDate === 'object' ? exp.endDate.month : '')}
-                      onChange={(e) => handleExperienceChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof exp.endDate === 'object' ? exp.endDate : { month: '', year: '' }), month: e.target.value })}
-                      disabled={exp.isCurrent}
-                    >
-                      <option value="" disabled>Mês Fim</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                      <option value="Atual">Atual</option>
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.endDate === 'Atual' ? String(currentYear) : (typeof exp.endDate === 'object' ? exp.endDate.year : '')}
-                      onChange={(e) => handleExperienceChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof exp.endDate === 'object' ? exp.endDate : { month: '', year: '' }), year: e.target.value })}
-                      disabled={exp.isCurrent}
-                    >
-                      <option value="" disabled>Ano Fim</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <label className="flex items-center space-x-2 justify-end sm:justify-start">
-                    <input
-                      type="checkbox"
-                      checked={exp.isCurrent || false}
-                      onChange={(e) => handleExperienceChange(index, 'isCurrent', e.target.checked)}
-                      className="accent-[#FF66C4]"
-                    />
-                    <span>Atual</span>
-                  </label>
-                  <textarea
-                    placeholder="Descrição das Atividades Exercidas"
-                    rows={4}
-                    className="w-full p-2 rounded bg-[#1A1038] text-white col-span-2"
-                    value={exp.description}
-                    onChange={(e) => handleExperienceChange(index, 'description', e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 bg-red-500 text-white font-bold px-4 py-2 rounded hover:bg-red-700 transition w-full sm:w-auto"
-                  onClick={() => removeExperience(index)}
-                >
-                  Remover Experiência
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="mt-2 bg-[#1A1038] text-white font-bold px-4 py-2 rounded hover:bg-gray-700 transition w-full sm:w-auto"
-              onClick={addExperience}
-            >
-              Adicionar Experiência
-            </button>
-          </div>
-
-          <div className="mb-4">
-            <h2 className="text-2xl text-[#FF66C4] font-bold mb-2">Formação Acadêmica</h2>
-            {formData.education.map((edu, index) => (
-              <div key={index} className="mb-4 p-4 border border-gray-300 rounded">
-                <h3 className="text-xl font-semibold mb-2">Formação {index + 1}</h3>
-                <div className="flex flex-col gap-4">
-                  <input
-                    type="text"
-                    placeholder="Instituição de Ensino"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={edu.institution}
-                    onChange={(e) => handleEducationChange(index, 'institution', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Grau ou Título"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={edu.degree}
-                    onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.startDate.month}
-                      onChange={(e) => handleEducationChange(index, 'startDate', { ...edu.startDate, month: e.target.value })}
-                    >
-                      <option value="" disabled>Mês Início</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.startDate.year}
-                      onChange={(e) => handleEducationChange(index, 'startDate', { ...edu.startDate, year: e.target.value })}
-                    >
-                      <option value="" disabled>Ano Início</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.endDate === 'Atual' ? 'Atual' : (typeof edu.endDate === 'object' ? edu.endDate.month : '')}
-                      onChange={(e) => handleEducationChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof edu.endDate === 'object' ? edu.endDate : { month: '', year: '' }), month: e.target.value })}
-                    >
-                      <option value="" disabled>Mês Fim</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                      <option value="Atual">Atual</option>
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.endDate === 'Atual' ? String(currentYear) : (typeof edu.endDate === 'object' ? edu.endDate.year : '')}
-                      onChange={(e) => handleEducationChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof edu.endDate === 'object' ? edu.endDate : { month: '', year: '' }), year: e.target.value })}
-                      disabled={edu.endDate === 'Atual'}
-                    >
-                      <option value="" disabled>Ano Fim</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <textarea
-                    placeholder="Descrição (opcional)"
-                    rows={2}
-                    className="w-full p-2 rounded bg-[#1A1038] text-white col-span-2"
-                    value={edu.description}
-                    onChange={(e) => handleEducationChange(index, 'description', e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 bg-red-500 text-white font-bold px-4 py-2 rounded hover:bg-red-700 transition w-full sm:w-auto"
-                  onClick={() => removeEducation(index)}
-                >
-                  Remover Formação
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="mt-2 bg-[#1A1038] text-white font-bold px-4 py-2 rounded hover:bg-gray-700 transition w-full sm:w-auto"
-              onClick={addEducation}
-            >
-              Adicionar Formação
-            </button>
-          </div>
-
-          <div className="mb-4">
-            <label className="block mb-1 text-[#FF66C4] font-bold">Soft Skills</label>
-            <textarea name="Soft Skills" rows={4} className="w-full p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.sections['Soft Skills']} />
-          </div>
-
-          <div className="mb-4">
-            <label className="block mb-1 text-[#FF66C4] font-bold">Diferenciais</label>
-            <textarea name="Diferenciais" rows={4} className="w-full p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.sections['Diferenciais']} />
-          </div>
-
-          <button
-            onClick={handleDownload}
-            className="mt-6 bg-[#FF66C4] text-black font-bold px-6 py-2 rounded hover:bg-pink-400 transition w-full sm:w-auto"
-            disabled={!pdfPreviewUrl}
-          >
-            Baixar PDF
-          </button>
-        </div>
-      </div> */}
-
       <Carousel className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
         <CarouselContent>
           <CarouselItem>
@@ -592,148 +93,186 @@ export default function CVPage() {
                     <form className='w-full flex flex-col gap-4'>
                       <FormField
                         control={form.control}
-                        name="header.fullName"
+                        name="contactInfo.fullName"
                         render={() => (
                           <FormItem>
                             <FormLabel>Full Name:</FormLabel>
                             <FormControl>
                               <Input
-                                name="name"
-                                placeholder={faker.person.fullName()}
-                                onChange={handleChange}
-                                value={formData.name}
+                                placeholder="Digite seu nome completo"
+                                onChange={(e) => form.setValue('contactInfo.fullName', e.target.value)}
+                                value={form.getValues('contactInfo.fullName')}
+                                className="w-full"
+                                type="text"
+                                autoComplete="off"
+                                autoFocus
+                                required
+                                maxLength={50}
+                                minLength={3}
+                                pattern="^[a-zA-ZÀ-ÿ\s]+$"
+                                title="O nome deve conter apenas letras e espaços."
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
                       <FormField
                         control={form.control}
-                        name="header.title"
+                        name="contactInfo.title"
                         render={() => (
                           <FormItem>
-                            <FormLabel>Title:</FormLabel>
+                            <FormLabel>Título:</FormLabel>
                             <FormControl>
                               <Input
-                                name="title"
-                                placeholder={faker.person.jobTitle()}
-                                onChange={handleChange}
-                                value={formData.title}
+                                placeholder="Desenvolvedor Frontend"
+                                onChange={(e) => form.setValue('contactInfo.title', e.target.value)}
+                                value={form.getValues('contactInfo.title')}
+                                className="w-full"
+                                type="text"
+                                autoComplete="off"
+                                required
+                                maxLength={50}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
                       <FormField
                         control={form.control}
-                        name="header.email"
+                        name="contactInfo.email"
                         render={() => (
                           <FormItem>
                             <FormLabel>Email:</FormLabel>
                             <FormControl>
                               <Input
-                                name="email"
-                                placeholder={faker.internet.email()}
-                                onChange={handleChange}
-                                value={formData.email}
+                                placeholder="Digite seu email"
+                                onChange={(e) => form.setValue('contactInfo.email', e.target.value)}
+                                value={form.getValues('contactInfo.email')}
+                                className="w-full"
+                                type="email"
+                                autoComplete="off"
+                                required
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
                       <FormField
                         control={form.control}
-                        name="header.phone"
+                        name="contactInfo.phone"
                         render={() => (
                           <FormItem>
-                            <FormLabel>Phone:</FormLabel>
+                            <FormLabel>Telefone:</FormLabel>
                             <FormControl>
                               <Input
-                                name="phone"
-                                placeholder="+55 81 99993-4299"
-                                onChange={handleChange}
-                                value={formData.phone}
-                                pattern="^\+55 \d{2} \d{5}-\d{4}$"
-                                title="Formato: +55 81 99993-4299"
+                                placeholder="Digite DDI, DDD e número"
+                                onChange={(e) => form.setValue('contactInfo.phone', e.target.value)}
+                                value={form.getValues('contactInfo.phone')}
+                                className="w-full"
+                                type="tel"
+                                autoComplete="off"
+                                required
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
                       <FormField
                         control={form.control}
-                        name="header.phoneIsWhatsapp"
-                        render={() => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <Switch
-                                name="phoneIsWhatsapp"
-                                checked={formData.phoneIsWhatsapp}
-                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, phoneIsWhatsapp: checked }))}
-                              />
-                            </FormControl>
-                            <FormLabel>Is WhatsApp</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="header.hasLinkedin"
+                        name="contactInfo.phoneIsWhatsapp"
                         render={({ field }) => (
                           <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <FormLabel>Has LinkedIn</FormLabel>
+                            <FormLabel>WhatsApp:</FormLabel>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormItem>
                         )}
                       />
-                      {form.watch('header.hasLinkedin') && (
+
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.hasLinkedin"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormLabel>Possui LinkedIn:</FormLabel>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormItem>
+                        )}
+                      />
+                      {form.watch('contactInfo.hasLinkedin') && (
                         <FormField
                           control={form.control}
-                          name="header.linkedinUsername"
-                          render={({ field }) => (
+                          name="contactInfo.linkedinUsername"
+                          render={() => (
                             <FormItem>
-                              <FormLabel>LinkedIn Username:</FormLabel>
+                              <FormLabel>LinkedIn:</FormLabel>
                               <FormControl>
-                                <Input placeholder={faker.internet.username()} {...field} />
+                                <Input
+                                  placeholder="Digite seu usuário do LinkedIn"
+                                  onChange={(e) => form.setValue('contactInfo.linkedinUsername', e.target.value)}
+                                  value={form.getValues('contactInfo.linkedinUsername')}
+                                  className="w-full"
+                                  type="text"
+                                  autoComplete="off"
+                                  required
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       )}
+
                       <FormField
                         control={form.control}
-                        name="header.hasGithub"
+                        name="contactInfo.hasGithub"
                         render={({ field }) => (
                           <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <FormLabel>Has GitHub</FormLabel>
+                            <FormLabel>Possui GitHub:</FormLabel>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormItem>
                         )}
                       />
-                      {form.watch('header.hasGithub') && (
+                      {form.watch('contactInfo.hasGithub') && (
                         <FormField
                           control={form.control}
-                          name="header.githubUsername"
-                          render={({ field }) => (
+                          name="contactInfo.githubUsername"
+                          render={() => (
                             <FormItem>
-                              <FormLabel>GitHub Username:</FormLabel>
+                              <FormLabel>GitHub:</FormLabel>
                               <FormControl>
-                                <Input placeholder={faker.internet.username()} {...field} />
+                                <Input
+                                  placeholder="Digite seu usuário do GitHub"
+                                  onChange={(e) => form.setValue('contactInfo.githubUsername', e.target.value)}
+                                  value={form.getValues('contactInfo.githubUsername')}
+                                  className="w-full"
+                                  type="text"
+                                  autoComplete="off"
+                                  required
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       )}
+
                     </form>
                   </Form>
                 </CardContent>

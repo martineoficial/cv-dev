@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { FormDataSchema } from "../schemas/FormDataSchema";
+
 export type Experience = {
     company: string;
     title: string;
@@ -15,26 +18,4 @@ export type Education = {
     description?: string;
 }
 
-export type FormData = {
-    name: string;
-    title: string;
-    email: string;
-    phone: string;
-    phoneIsWhatsapp: boolean;
-    linkedinUsername: string;
-    githubUsername?: string;
-    hasLinkedin: boolean;
-    hasGithub?: boolean;
-    sections: {
-        'Sobre mim': string;
-        'Soft Skills': string;
-        'Diferenciais': string;
-    };
-    experience: Experience[];
-    education: Education[];
-    skills: {
-        [category: string]: {
-            [subcategory: string]: string[];
-        };
-    };
-}
+export type FormData = z.infer<typeof FormDataSchema>;
