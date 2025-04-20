@@ -1,0 +1,62 @@
+{
+    "Marketing": {
+        "Marketing Digital": [
+            "Inbound Marketing",
+            "Outbound Marketing",
+            "Marketing de Conteúdo",
+            "Marketing de Afiliados",
+            "Marketing de Performance",
+            "Automação de Marketing",
+            "E-mail Marketing"
+        ],
+        "SEO": [
+            "SEO On-page",
+            "SEO Off-page",
+            "SEO Técnico",
+            "Pesquisa de Palavras-chave",
+            "Análise de Concorrência (SEO)"
+        ],
+        "Mídias Sociais": [
+            "Marketing de Mídias Sociais",
+            "Gestão de Comunidades",
+            "Publicidade em Mídias Sociais (Facebook Ads, Instagram Ads, LinkedIn Ads)",
+            "Monitoramento de Marca"
+        ],
+        "Tráfego Pago": [
+            "Google Ads (Search, Display, Shopping, Video)",
+            "Facebook Ads",
+            "Instagram Ads",
+            "LinkedIn Ads",
+            "Geração de Leads",
+            "Otimização de Campanhas (CRO)"
+        ],
+        "Analytics": [
+            "Google Analytics",
+            "Google Tag Manager",
+            "Data Studio / Looker Studio",
+            "Análise de Dados",
+            "Relatórios de Marketing"
+        ],
+        "Ferramentas de Marketing": [
+            "CRM (Customer Relationship Management)",
+            "Ferramentas de Automação (HubSpot, Mailchimp, RD Station)",
+            "Ferramentas de SEO (SEMrush, Ahrefs, Moz)",
+            "Ferramentas de Mídias Sociais (Hootsuite, Buffer)",
+            "Plataformas de E-commerce (Shopify, WooCommerce)"
+        ],
+        "Estratégia": [
+            "Planejamento de Marketing",
+            "Definição de KPIs",
+            "Pesquisa de Mercado",
+            "Segmentação de Público",
+            "Análise SWOT",
+            "Branding"
+        ],
+        "Conteúdo": [
+            "Criação de Conteúdo (Blog Posts, Ebooks, Infográficos)",
+            "Copywriting",
+            "Marketing de Vídeo",
+            "Otimização de Conteúdo"
+        ]
+    }
+}
