@@ -1,49 +1,9 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react';
 import skillsOptions from '@/app/data/data.json';
+import type { FormData, Experience, Education } from '@/app/types/types';
 
 export default function CVPage() {
-  interface Experience {
-    company: string;
-    title: string;
-    startDate: { month: string; year: string };
-    endDate: { month: string; year: string } | 'Atual';
-    description: string;
-    isCurrent?: boolean;
-  }
-
-  interface Education {
-    institution: string;
-    degree: string;
-    startDate: { month: string; year: string };
-    endDate: { month: string; year: string } | 'Atual';
-    description?: string;
-  }
-
-  interface FormData {
-    name: string;
-    title: string;
-    email: string;
-    phone: string;
-    phoneIsWhatsapp: boolean;
-    linkedinUsername: string;
-    githubUsername: string;
-    hasLinkedin: boolean;
-    hasGithub: boolean;
-    sections: {
-      'Sobre mim': string;
-      'Soft Skills': string;
-      'Diferenciais': string;
-    };
-    experience: Experience[];
-    education: Education[];
-    skills: {
-      [category: string]: {
-        [subcategory: string]: string[];
-      };
-    };
-  }
-
   const [formData, setFormData] = useState<FormData>({
     name: '',
     title: '',
