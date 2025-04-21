@@ -2,7 +2,6 @@ import { FormDataSchema } from '@/app/schemas/FormDataSchema';
 import type { FormData } from '@/app/types/types';
 import { capitalizeAllWords } from '@/app/utils/capitalize';
 import fs from 'fs';
-import { LogOutIcon } from 'lucide-react';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 import PDFDocument from 'pdfmake/build/pdfmake';
@@ -92,6 +91,17 @@ export default async function handler(
                 });
             }
 
+            if (formData.content.sections['Sobre mim']) {
+                pdfContent.push({
+                    text: 'Sobre mim',
+                    style: 'sectionTitle',
+                });
+                pdfContent.push({
+                    text: formData.content.sections['Sobre mim'],
+                    style: 'sectionContent',
+                });
+            }
+
             // TODO: Adicione aqui a lógica para incluir outros campos no pdfContent,
             // como título, email, seções de conteúdo ('Sobre mim', etc.), experiências, educação, skills.
             // Exemplo (apenas para ilustrar onde adicionar):
@@ -121,6 +131,15 @@ export default async function handler(
                     contacts: {
                         fontSize: 12,
                         margin: [0, 0, 0, 8],
+                    },
+                    sectionTitle: {
+                        fontSize: 16,
+                        bold: true,
+                        margin: [0, 10, 0, 5],
+                    },
+                    sectionContent: {
+                        fontSize: 12,
+                        margin: [0, 0, 0, 10],
                     },
                     // TODO: Adicione aqui outros estilos que você precisar (sectionTitle, sectionContent, etc.)
                 },
