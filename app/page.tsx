@@ -1,44 +1,107 @@
 'use client'
-import intialSkillsOptions from '@/app/data/data.json';
+import initialSkillsOptions from '@/app/data/data.json';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { FormDataSchema } from './schemas/FormDataSchema';
-import { Textarea } from '@/components/ui/textarea';
 import { MultiSelect } from './components/multi-select/multi-select';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
+import { FormDataSchema } from './schemas/FormDataSchema';
 
 export default function CVPage() {
   const form = useForm({
     resolver: zodResolver(FormDataSchema),
     defaultValues: {
       contactInfo: {
-        fullName: '',
-        title: '',
-        email: '',
-        phone: '',
-        phoneIsWhatsapp: false,
-        linkedinUsername: '',
-        hasLinkedin: false,
+        fullName: 'Diana Martine Blyza Pontes',
+        title: 'Analista de Engenharia de Software',
+        email: 'diana_martine@outlook.com',
+        phone: '+5581999934299',
+        phoneIsWhatsapp: true,
+        linkedinUsername: 'martineoficial',
+        hasLinkedin: true,
+        githubUsername: 'martineoficial',
+        hasGithub: true,
       },
       content: {
         sections: {
-          'Sobre mim': ``,
-          'Soft Skills': ``,
-          'Diferenciais': ``,
+          'Sobre mim': `
+Sou desenvolvedora front-end com vasta experiência na criação de interfaces de usuário ricas e responsivas, com foco em performance e escalabilidade. Ao longo da minha trajetória, contribuí para o desenvolvimento de soluções inovadoras utilizando JavaScript, React e outras ferramentas modernas. Tenho experiência colaborando com equipes de design e back-end para garantir a viabilidade técnica dos projetos, implementando soluções alinhadas às necessidades dos usuários e otimizadas para uma experiência fluida.
+
+Na Elo Serviços S.A., trabalhei no desenvolvimento de interfaces em React, e fui responsável pela integração de APIs, garantindo funcionalidades escaláveis e de alta performance. Na Accenture, também contribuí para o desenvolvimento de interfaces de usuário e participei de diversas etapas do ciclo de vida do software, incluindo revisões de código e implementação de funcionalidades sustentáveis.
+
+Com um forte compromisso com o código limpo, bem documentado e de fácil manutenção, estou sempre em busca de me manter atualizada com as últimas tendências e melhores práticas do mercado de desenvolvimento front-end.
+`,
+          'Soft Skills': `- Resolução de Problemas e Pensamento Crítico - Trabalho em Equipe e Comunicação
+- Aprendizado Contínuo e Adaptabilidade
+- Foco no Produto e Experiência do Usuário`,
+          'Diferenciais': `- Conhecimento em Arquitetura de Software e Segurança (OWASP, CSRF) - Experiência Full Stack e boas práticas de desenvolvimento
+- Inglês B2 (leitura, escrita e comunicação técnica)`,
         },
-        experience: [],
-        education: [],
-        skills: {},
+        experience: [{
+          company: 'Elo Serviços S.A.',
+          title: 'Analista de Engenharia de Software Pleno',
+          startDate: { month: 'Janeiro', year: '2022' },
+          endDate: { month: 'Outubro', year: '2024' },
+          description: `- Desenvolvimento de recursos voltados ao usuário para plataformas web usando JavaScript e React, garantindo uma experiência fluida e otimizada.
+- Colaboração com designers e desenvolvedores de back-end para implementar soluções inovadoras, integrando APIs e trabalhando com programação assíncrona.
+- Foco em otimizar a velocidade e escalabilidade das aplicações, garantindo performance máxima em todas as funcionalidades.
+- Participação ativa em revisões de código para garantir a qualidade e a manutenção do código, além de fornecer feedback construtivo para os colegas.
+- Garantia da viabilidade técnica dos designs UI/UX, trabalhando de perto com a equipe de design. - Adoção de práticas de código limpo, bem documentado e sustentável, com foco em manutenção de longo prazo.
+`,
+          isCurrent: false,
+        }, {
+          company: 'Accenture',
+          title: 'Desenvolvedora de Aplicações',
+          startDate: { month: 'Junho', year: '2021' },
+          endDate: { month: 'Janeiro', year: '2022' },
+          description: `- Desenvolvimento de interfaces de usuário com React.js e integração com back-end utilizando Java.
+- Participação no ciclo de vida completo do software, incluindo a documentação técnica, revisões de código e melhoria contínua dos processos.
+- Implementação de funcionalidades escaláveis e otimização de performance para melhorar a experiência do usuário.
+- Colaboração com a equipe para manter a qualidade do código e promover soluções de fácil manutenção e escalabilidade.
+`,
+          isCurrent: false,
+        }],
+        education: [{
+          degree: 'Tecnólogo em Análise e Desenvolvimento de Sistemas',
+          institution: 'UNINABUCO',
+          startDate: { month: 'Janeiro', year: '2020' },
+          endDate: { month: 'Outubro', year: '2024' },
+        }],
+        skills: initialSkillsOptions
       },
     },
   });
+  // const form = useForm({
+  //   resolver: zodResolver(FormDataSchema),
+  //   defaultValues: {
+  //     contactInfo: {
+  //       fullName: '',
+  //       title: '',
+  //       email: '',
+  //       phone: '',
+  //       phoneIsWhatsapp: true,
+  //       linkedinUsername: '',
+  //       hasLinkedin: false,
+  //     },
+  //     content: {
+  //       sections: {
+  //         'Sobre mim': ``,
+  //         'Soft Skills': ``,
+  //         'Diferenciais': ``,
+  //       },
+  //       experience: [],
+  //       education: [],
+  //       skills: {},
+  //     },
+  //   },
+  // });
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
@@ -70,6 +133,17 @@ export default function CVPage() {
     return () => subscription.unsubscribe();
   }, [form, generatePdf]);
 
+  const handleDownload = useCallback(() => {
+    if (pdfPreviewUrl) {
+      const link = document.createElement('a');
+      link.href = pdfPreviewUrl;
+      link.download = 'cv.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }, [pdfPreviewUrl]);
+
   return (
     <div className="min-h-screen bg-[#0D0126] text-white p-6 flex flex-col md:flex-row">
       <Carousel className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 md:sticky md:top-0">
@@ -97,7 +171,7 @@ export default function CVPage() {
                         name="contactInfo.fullName"
                         render={() => (
                           <FormItem>
-                            <FormLabel>Full Name:</FormLabel>
+                            <FormLabel>Nome Completo:</FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Digite seu nome completo"
@@ -370,7 +444,7 @@ export default function CVPage() {
                 <CardContent className="flex p-6">
                   <Form {...form}>
                     <form className='w-full flex flex-col gap-4'>
-                      {Object.entries(intialSkillsOptions).map(([category, subcategories]) => (
+                      {Object.entries(initialSkillsOptions).map(([category, subcategories]) => (
                         <div key={category} className="mb-6">
                           <Accordion type="single" collapsible className='w-full'>
                             <AccordionItem value={category} className='w-full'>
@@ -973,7 +1047,17 @@ export default function CVPage() {
       </Carousel>
 
       {pdfPreviewUrl && (
-        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[92vh] md:sticky md:top-0">
+        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
+          <div className="mt-1 mb-4 flex justify-between items-center">
+            <Button
+              variant="secondary"
+              className='w-fit'
+              onClick={handleDownload}
+              disabled={!pdfPreviewUrl}
+            >
+              Baixar Currículo
+            </Button>
+          </div>
           <div className="border border-gray-300 rounded overflow-hidden h-full">
             <iframe
               src={pdfPreviewUrl}
