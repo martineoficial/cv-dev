@@ -11,52 +11,31 @@ import { useForm } from 'react-hook-form';
 import { FormDataSchema } from './schemas/FormDataSchema';
 import { Textarea } from '@/components/ui/textarea';
 import { MultiSelect } from './components/multi-select/multi-select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 
 export default function CVPage() {
   const form = useForm({
     resolver: zodResolver(FormDataSchema),
     defaultValues: {
       contactInfo: {
-        fullName: 'Diana Martine Blyza Pontes',
-        title: 'Analista de engenharia de software',
-        email: 'diana_martine@outlook.com',
-        phone: '+5581999934299',
-        phoneIsWhatsapp: true,
-        linkedinUsername: 'martineoficial',
-        githubUsername: 'martineoficial',
-        hasLinkedin: true,
-        hasGithub: true,
+        fullName: '',
+        title: '',
+        email: '',
+        phone: '',
+        phoneIsWhatsapp: false,
+        linkedinUsername: '',
+        hasLinkedin: false,
       },
       content: {
         sections: {
-          'Sobre mim': `Analista de Engenharia de Software e especializada com desenvolvimento em front end, a minha atuação na Elo Serviços S.A., me permitiu colaborar com a manutenção do Elo Design System, que constitui manter a consistencia em design nos projetos, sites, páginas e demais produtos da empresa, buscando uma melhor experiência para o usuário final, o que impulsionou o êxito no processo de rebranding da marca. Com conhecimentos em backend e dados, atuei como engenheira de software nas squads responsáveis pelo cadastro e manutenção dos usuários dos portais da companhia, tanto em B2B como em B2C, dando manutenção a banco de dados, projetos e repositórios e resolução de chamados pertinente às necessidades dos clientes.
-
-A minha estratégia consiste em qualidade na entrega e comprometimento com o produto, promovendo entregas acompanhadas de bateria de testes unitários e de ponta a ponta, documentação, previsibilidade e priorização de performance SEO. Na Accenture, atuei documentando projetos em backend com Java, e implementando interfaces de usuário nas aplicações web.`,
-          'Soft Skills': `Soft Skills
-- Resolução de Problemas e Pensamento Crítico
-- Trabalho em Equipe e Comunicação
-- Aprendizado Contínuo e Adaptabilidade
-- Foco no Produto e Experiência do Usuário
-`,
-          'Diferenciais': `Diferenciais
-- Conhecimento em Arquitetura de Software e Segurança (OWASP, CSRF)
-- Experiência Full Stack e boas práticas de desenvolvimento
-- Inglês B2 (leitura, escrita e comunicação técnica)`,
+          'Sobre mim': ``,
+          'Soft Skills': ``,
+          'Diferenciais': ``,
         },
         experience: [],
-        education: [{
-          degree: `Tecnólogo em Análise e Desenvolvimento de Sistemas`,
-          institution: `UNINABUCO`,
-          startDate: {
-            month: `12`,
-            year: `2020`
-          },
-          endDate: {
-            month: `12`,
-            year: `2024`
-          }
-        }],
-        skills: intialSkillsOptions,
+        education: [],
+        skills: {},
       },
     },
   });
@@ -391,78 +370,596 @@ A minha estratégia consiste em qualidade na entrega e comprometimento com o pro
                 <CardContent className="flex p-6">
                   <Form {...form}>
                     <form className='w-full flex flex-col gap-4'>
-
                       {Object.entries(intialSkillsOptions).map(([category, subcategories]) => (
                         <div key={category} className="mb-6">
-                          <h3 className="text-xl font-semibold mb-2">{category}</h3>
-                          {Object.entries(subcategories).map(([subcategory, options]) => (
-                            <div key={subcategory} className="mb-3">
-                              <label className="block mb-1 font-medium italic">{subcategory}</label>
-                              <MultiSelect
-                                options={
-                                  options.map(option => ({
-                                    value: option,
-                                    label: option,
-                                  }))
-                                }
-                              />
-                            </div>
-                          ))}
+                          <Accordion type="single" collapsible className='w-full'>
+                            <AccordionItem value={category} className='w-full'>
+                              <AccordionTrigger className='w-full'>
+                                <div className="flex items-center justify-between w-full">
+                                  <h3 className="text-xl font-semibold mb-2">{category}</h3>
+                                  <span className="text-sm text-gray-400">{Object.values(subcategories).flat().length} tags</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                {Object.entries(subcategories).map(([subcategory, options]) => (
+                                  <div key={subcategory} className="mb-3">
+                                    <label className="block mb-1 font-medium italic">{subcategory}</label>
+                                    <MultiSelect
+                                      options={
+                                        options.map(option => ({
+                                          value: option,
+                                          label: option,
+                                        }))
+                                      }
+                                      defaultValue={form.getValues(`content.skills.${category}.${subcategory}`)}
+                                      onValueChange={(selectedOptions) => {
+                                        const selectedValues = selectedOptions.map(option => option.valueOf());
+                                        form.setValue(`content.skills.${category}.${subcategory}`, selectedValues);
+                                      }}
+                                      onNewOption={(newOption) => {
+                                        const newOptions = [...options, newOption];
+                                        form.setValue(`content.skills.${category}.${subcategory}`, newOptions);
+                                        form.setValue(`content.skills.${category}.${subcategory}`, newOptions);
+                                      }}
+                                      className="w-full"
+                                      placeholder={`Selecione as tags ou adicione novas`}
+                                      value={form.getValues(`content.skills.${category}.${subcategory}`)}
+                                      autoFocus
+                                      title="As tags devem conter apenas letras e espaços."
+                                    />
+                                  </div>
+                                ))}
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
                         </div>
                       ))}
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
 
-                      {/* <FormField
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Experiência
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas experiências profissionais, incluindo cargos, empresas e datas. Isso ajudará os recrutadores a entenderem seu histórico profissional.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      {form.watch('content.experience').map((experience, index) => (
+                        <div key={index} className="mb-6">
+                          <Accordion type="single" collapsible className='w-full'>
+                            <AccordionItem value={`experience-${index}`} className='w-full'>
+                              <AccordionTrigger className='w-full'>
+                                <div className="flex items-center justify-between w-full">
+                                  <h3 className="text-xl font-semibold mb-2">{experience.company || 'Experiência'}</h3>
+                                  <span className="text-sm text-gray-400">{experience.title || 'Cargo'}</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.company`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Empresa:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite o nome da empresa"
+                                          onChange={(e) => form.setValue(`content.experience.${index}.company`, e.target.value)}
+                                          value={form.getValues(`content.experience.${index}.company`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.title`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Cargo:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite seu cargo"
+                                          onChange={(e) => form.setValue(`content.experience.${index}.title`, e.target.value)}
+                                          value={form.getValues(`content.experience.${index}.title`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.startDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Início"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.startDate.month`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.startDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.startDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Início"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.startDate.year`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.startDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.endDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Término"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.endDate.month`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.endDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.endDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Término"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.endDate.year`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.endDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.description`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Descrição:</FormLabel>
+                                      <FormControl>
+                                        <Textarea
+                                          placeholder="Digite a descrição da experiência"
+                                          onChange={(e) => form.setValue(`content.experience.${index}.description`, e.target.value)}
+                                          value={form.getValues(`content.experience.${index}.description`)}
+                                          className="w-full"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.isCurrent`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2 mb-4">
+                                      <FormLabel>Experiência Atual:</FormLabel>
+                                      <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormItem>
+                                  )}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    const updatedExperience = form.getValues('content.experience');
+                                    updatedExperience.splice(index, 1);
+                                    form.setValue('content.experience', updatedExperience);
+                                  }}
+                                >
+                                  Remover Experiência
+                                </Button>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
+                      ))}
+                      <Button
+                        className='w-fit'
+                        type="button"
+                        onClick={() => {
+                          const updatedExperience = form.getValues('content.experience');
+                          updatedExperience.push({
+                            company: '',
+                            title: '',
+                            startDate: { month: '', year: '' },
+                            endDate: { month: '', year: '' },
+                            description: '',
+                            isCurrent: false,
+                          });
+                          form.setValue('content.experience', updatedExperience);
+                        }}
+                      >
+                        Adicionar Experiência
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Educação
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas informações educacionais, incluindo cursos, instituições e datas. Isso ajudará os recrutadores a entenderem sua formação acadêmica.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      {form.watch('content.education').map((education, index) => (
+                        <div key={index} className="mb-6">
+                          <Accordion type="single" collapsible className='w-full'>
+                            <AccordionItem value={`education-${index}`} className='w-full'>
+                              <AccordionTrigger className='w-full'>
+                                <div className="flex items-center justify-between w-full">
+                                  <h3 className="text-xl font-semibold mb-2">{education.institution || 'Educação'}</h3>
+                                  <span className="text-sm text-gray-400">{education.degree || 'Curso'}</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <FormField
+                                  control={form.control}
+                                  name={`content.education.${index}.institution`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Instituição:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite o nome da instituição"
+                                          onChange={(e) => form.setValue(`content.education.${index}.institution`, e.target.value)}
+                                          value={form.getValues(`content.education.${index}.institution`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name={`content.education.${index}.degree`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Curso:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite seu curso"
+                                          onChange={(e) => form.setValue(`content.education.${index}.degree`, e.target.value)}
+                                          value={form.getValues(`content.education.${index}.degree`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                {/* Add start date */}
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.startDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Início"
+                                              onChange={(e) => form.setValue(`content.education.${index}.startDate.month`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.startDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.startDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Início"
+                                              onChange={(e) => form.setValue(`content.education.${index}.startDate.year`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.startDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                {/* Add end date */}
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.endDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Término"
+                                              onChange={(e) => form.setValue(`content.education.${index}.endDate.month`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.endDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.endDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Término"
+                                              onChange={(e) => form.setValue(`content.education.${index}.endDate.year`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.endDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    const updatedEducation = form.getValues('content.education');
+                                    updatedEducation.splice(index, 1);
+                                    form.setValue('content.education', updatedEducation);
+                                  }}
+                                >
+                                  Remover Curso
+                                </Button>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
+                      ))}
+                      <Button
+                        className='w-fit'
+                        type="button"
+                        onClick={() => {
+                          const updatedEducation = form.getValues('content.education');
+                          updatedEducation.push({
+                            institution: '',
+                            degree: '',
+                            startDate: { month: '', year: '' },
+                            endDate: { month: '', year: '' },
+                          });
+                          form.setValue('content.education', updatedEducation);
+                        }}
+                      >
+                        Adicionar Curso
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Soft Skills
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas soft skills, como comunicação, trabalho em equipe e liderança. Isso ajudará os recrutadores a entenderem suas habilidades interpessoais.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
                         control={form.control}
-                        name="content.skills"
+                        name="content.sections.Soft Skills"
                         render={() => (
                           <FormItem>
-                            <FormLabel>Sobre mim:</FormLabel>
+                            <FormLabel>Soft Skills:</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Escreva o seu resumo aqui"
-                                onChange={(e) => form.setValue('content.sections.Sobre mim', e.target.value)}
-                                value={form.getValues('content.sections.Sobre mim')}
+                                placeholder="Escreva suas soft skills aqui"
+                                onChange={(e) => form.setValue('content.sections.Soft Skills', e.target.value)}
+                                value={form.getValues('content.sections.Soft Skills')}
                                 className="w-full"
                                 autoComplete="off"
                                 autoFocus
                                 required
-                               />
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
-                      /> */}
+                      />
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
 
-                      {/* <div className="mb-4">
-             <h2 className="text-2xl text-[#FF66C4] font-bold mb-2">Habilidades Técnicas</h2>
-             {Object.entries(skillsOptions).map(([category, subcategories]) => (
-               <div key={category} className="mb-6">
-                 <h3 className="text-xl font-semibold mb-2">{category}</h3>
-                 {Object.entries(subcategories).map(([subcategory, options]) => (
-                   <div key={subcategory} className="mb-3">
-                     <label className="block mb-1 font-medium italic">{subcategory}</label>
-                     <MultiSelect
-                       options={
-                         options.map(option => ({
-                           value: option,
-                           label: option,
-                         }))
-                       }
-                       defaultValue={formData.skills[category]?.[subcategory]}
-                       onValueChange={(selectedOptions) => {
-                         const selectedValues = selectedOptions.map(option => option.valueOf());
-                         handleSkillChange(category, subcategory, selectedValues);
-                       }}
-                       onNewOption={(newOption) => {
-                         handleNewSkill(category, subcategory, newOption);
-                       }}
-                     />
-                   </div>
-                 ))}
-               </div>
-             ))}
-           </div> */}
-
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Diferenciais
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione seus diferenciais, como cursos, certificações e prêmios. Isso ajudará os recrutadores a entenderem o que o torna único.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="content.sections.Diferenciais"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Diferenciais:</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Escreva seus diferenciais aqui"
+                                onChange={(e) => form.setValue('content.sections.Diferenciais', e.target.value)}
+                                value={form.getValues('content.sections.Diferenciais')}
+                                className="w-full"
+                                autoComplete="off"
+                                autoFocus
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </form>
                   </Form>
                 </CardContent>

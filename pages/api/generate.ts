@@ -82,7 +82,7 @@ export default async function handler(
                     link: `https://www.linkedin.com/in/${formData.contactInfo.linkedinUsername}`,
                 });
             }
-            
+
             if (formData.contactInfo.githubUsername) {
                 pdfContent.push({
                     text: `GitHub: ${formData.contactInfo.githubUsername}`,
@@ -102,38 +102,102 @@ export default async function handler(
                 });
             }
 
-            // TODO: Adicione aqui a lógica para incluir outros campos no pdfContent,
-            // como título, email, seções de conteúdo ('Sobre mim', etc.), experiências, educação, skills.
-            // Exemplo (apenas para ilustrar onde adicionar):
-            // if (formData.contactInfo.title) {
-            //     pdfContent.push({ text: formData.contactInfo.title, style: 'titleStyle' }); // Crie 'titleStyle' nos styles
-            // }
-            // if (formData.content.sections['Sobre mim']) {
-            //      pdfContent.push({ text: 'Sobre mim', style: 'sectionTitle' }); // Crie 'sectionTitle' nos styles
-            //      pdfContent.push({ text: formData.content.sections['Sobre mim'], style: 'sectionContent' }); // Crie 'sectionContent' nos styles
-            // }
-            // ... e assim por diante para as experiências, educação, skills, etc.
+            const skillsContent = [] as any;
+            if (formData.content.skills) {
+                Object.entries(formData.content.skills).forEach(([category, subcategories]) => {
+                    const categorySkills = [] as any;
+                    Object.entries(subcategories || {}).forEach(([subcategory, skills]) => {
+                        if (skills && skills.length > 0) {
+                            categorySkills.push({ text: `${subcategory}: ${skills.join(', ')}`, style: 'skillSubcategoryText' });
+                        }
+                    });
+                    if (categorySkills.length > 0) {
+                        skillsContent.push({ text: category, style: 'skillCategory' });
+                        skillsContent.push({ stack: categorySkills, margin: [10, 0, 0, 5] });
+                    }
+                });
+            }
+            if (skillsContent.length > 0) {
+                pdfContent.push({ text: 'Habilidades Técnicas', style: 'sectionHeader' });
+                pdfContent.push(...skillsContent);
+            }
 
+            if (formData.content.experience && formData.content.experience.length > 0) {
+                pdfContent.push({ text: 'Experiência', style: 'sectionTitle' });
+                formData.content.experience.forEach((exp) => {
+                    const expContent = [];
+                    if (exp.company) {
+                        expContent.push({ text: exp.company, style: 'expCompany' });
+                    }
+                    if (exp.title) {
+                        expContent.push({ text: exp.title, style: 'expTitle' });
+                    }
+                    if (exp.startDate && exp.endDate) {
+                        expContent.push({ 
+                            text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - ${typeof exp.endDate === 'object' ? `${exp.endDate.month}/${exp.endDate.year}` : exp.endDate}`, 
+                            style: 'dateRange'
+                        });
+                    } else if (exp.startDate) {
+                        expContent.push({ text: `${exp.startDate.month} ${exp.startDate.year}`, style: 'dateRange' });
+                    }
+                    if (exp.description) {
+                        expContent.push({ text: exp.description, style: 'sectionContent' });
+                    }
+                    pdfContent.push({ stack: expContent, margin: [0, 0, 0, 10] });
+                });
+            }
+
+            if (formData.content.education && formData.content.education.length > 0) {
+                pdfContent.push({ text: 'Educação', style: 'sectionTitle' });
+                formData.content.education.forEach((edu) => {
+                    const eduContent = [];
+                    if (edu.institution) {
+                        eduContent.push({ text: edu.institution, style: 'expCompany' });
+                    }
+                    if (edu.degree) {
+                        eduContent.push({ text: edu.degree, style: 'expTitle' });
+                    }
+                    if (edu.startDate && edu.endDate) {
+                        eduContent.push({ 
+                            text: `${typeof edu.startDate === 'object' ? `${edu.startDate.month}/${edu.startDate.year}` : edu.startDate} - ${typeof edu.endDate === 'object' ? `${edu.endDate.month}/${edu.endDate.year}` : edu.endDate}`, 
+                            style: 'dateRange'
+                        });
+                    } else if (edu.startDate) {
+                        eduContent.push({ text: `${edu.startDate.month} ${edu.startDate.year}`, style: 'dateRange' });
+                    }
+                    pdfContent.push({ stack: eduContent, margin: [0, 0, 0, 10] });
+                });
+            }
+
+            if (formData.content.sections['Soft Skills']) {
+                pdfContent.push({ text: 'Soft Skills', style: 'sectionTitle' });
+                pdfContent.push({ text: formData.content.sections['Soft Skills'], style: 'sectionContent' });
+            }
+            if (formData.content.sections['Diferenciais']) {
+                pdfContent.push({ text: 'Diferenciais', style: 'sectionTitle' });
+                pdfContent.push({ text: formData.content.sections['Diferenciais'], style: 'sectionContent' });
+            }
 
             const pdfDoc = PDFDocument.createPdf({
                 content: pdfContent,
                 styles: {
                     fullName: {
-                        fontSize: 24,
+                        fontSize: 20,
                         bold: true,
-                        margin: [0, 0, 0, 8],
+                        margin: [0, 0, 0, 5],
                     },
                     title: {
-                        fontSize: 18,
+                        fontSize: 16,
                         italics: true,
-                        margin: [0, 0, 0, 8],
+                        margin: [0, 0, 0, 10],
                     },
                     contacts: {
                         fontSize: 12,
-                        margin: [0, 0, 0, 8],
+                        margin: [0, 0, 0, 5],
+                        color: '#555',
                     },
                     sectionTitle: {
-                        fontSize: 16,
+                        fontSize: 14,
                         bold: true,
                         margin: [0, 10, 0, 5],
                     },
@@ -141,7 +205,35 @@ export default async function handler(
                         fontSize: 12,
                         margin: [0, 0, 0, 10],
                     },
-                    // TODO: Adicione aqui outros estilos que você precisar (sectionTitle, sectionContent, etc.)
+                    sectionHeader: {
+                        fontSize: 14,
+                        bold: true,
+                        margin: [0, 10, 0, 5],
+                    },
+                    skillCategory: {
+                        fontSize: 12,
+                        bold: true,
+                        margin: [0, 10, 0, 5],
+                    },
+                    skillSubcategoryText: {
+                        fontSize: 12,
+                        margin: [0, 0, 0, 5],
+                    },
+                    expCompany: {
+                        fontSize: 12,
+                        bold: true,
+                        margin: [0, 0, 0, 5],
+                    },
+                    expTitle: {
+                        fontSize: 12,
+                        italics: true,
+                        margin: [0, 0, 0, 5],
+                    },
+                    dateRange: {
+                        fontSize: 12,
+                        margin: [0, 0, 0, 5],
+                        color: '#777',
+                    },
                 },
                 defaultStyle: {
                     fontSize: 11,
