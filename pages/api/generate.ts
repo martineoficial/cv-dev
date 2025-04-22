@@ -102,9 +102,11 @@ export default async function handler(
                 });
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const skillsContent = [] as any;
             if (formData.content.skills) {
                 Object.entries(formData.content.skills).forEach(([category, subcategories]) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const categorySkills = [] as any;
                     Object.entries(subcategories || {}).forEach(([subcategory, skills]) => {
                         if (skills && skills.length > 0) {
