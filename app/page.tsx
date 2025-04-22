@@ -31,8 +31,7 @@ export default function CVPage() {
       },
       content: {
         sections: {
-          'Sobre mim': `
-Sou desenvolvedora front-end com vasta experiência na criação de interfaces de usuário ricas e responsivas, com foco em performance e escalabilidade. Ao longo da minha trajetória, contribuí para o desenvolvimento de soluções inovadoras utilizando JavaScript, React e outras ferramentas modernas. Tenho experiência colaborando com equipes de design e back-end para garantir a viabilidade técnica dos projetos, implementando soluções alinhadas às necessidades dos usuários e otimizadas para uma experiência fluida.
+          'Sobre mim': `Sou desenvolvedora front-end com vasta experiência na criação de interfaces de usuário ricas e responsivas, com foco em performance e escalabilidade. Ao longo da minha trajetória, contribuí para o desenvolvimento de soluções inovadoras utilizando JavaScript, React e outras ferramentas modernas. Tenho experiência colaborando com equipes de design e back-end para garantir a viabilidade técnica dos projetos, implementando soluções alinhadas às necessidades dos usuários e otimizadas para uma experiência fluida.
 
 Na Elo Serviços S.A., trabalhei no desenvolvimento de interfaces em React, e fui responsável pela integração de APIs, garantindo funcionalidades escaláveis e de alta performance. Na Accenture, também contribuí para o desenvolvimento de interfaces de usuário e participei de diversas etapas do ciclo de vida do software, incluindo revisões de código e implementação de funcionalidades sustentáveis.
 
@@ -76,6 +75,8 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
         }],
         skills: initialSkillsOptions
       },
+      jobDetails: '',
+      apiKey: process.env.API_KEY || '',
     },
   });
   // const form = useForm({
@@ -113,21 +114,28 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.getValues()),
     });
-    console.log('response', response);
 
     const blob = await response.blob()
-    console.log('blob', blob);
-
     const url = window.URL.createObjectURL(blob);
-    console.log('url', url);
+    setPdfPreviewUrl(url);
+  }, [form]);
 
+  const generatePdfWithAI = useCallback(async () => {
+    setPdfPreviewUrl(null);
+
+    const response = await fetch('/api/generateWithAI', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form.getValues()),
+    });
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob);
     setPdfPreviewUrl(url);
   }, [form]);
 
   useEffect(() => {
-    console.clear();
-    const subscription = form.watch((value) => {
-      console.log('Form values changed:', value);
+    const subscription = form.watch(() => {
       generatePdf();
     });
     return () => subscription.unsubscribe();
@@ -144,6 +152,14 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
     }
   }, [pdfPreviewUrl]);
 
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateWithAI = useCallback(async () => {
+    setIsGenerating(true);
+    await generatePdfWithAI();
+    setIsGenerating(false);
+  }, [generatePdfWithAI]);
+
   return (
     <div className="min-h-screen bg-[#0D0126] text-white p-6 flex flex-col md:flex-row">
       <Carousel className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 md:sticky md:top-0">
@@ -151,7 +167,31 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
+                  <CardTitle>
+                    <h1>
+                      Seja Bem-Vindo(a) ao cv-dev
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      O cv-dev é uma ferramenta inovadora que permite criar currículos personalizados e profissionais de forma rápida e fácil. Com uma interface intuitiva e recursos avançados, você pode destacar suas habilidades, experiências e conquistas de maneira eficaz.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <p>
+                    Para começar, preencha as informações pessoais e profissionais nos campos abaixo. O preview do seu currículo será atualizado automaticamente à medida que você preenche os dados. Você pode adicionar experiências, habilidades e muito mais!
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Informações Pessoais
@@ -180,7 +220,6 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
                                 className="w-full"
                                 type="text"
                                 autoComplete="off"
-                                autoFocus
                                 required
                                 maxLength={50}
                                 minLength={3}
@@ -225,7 +264,7 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Informações de Contato
@@ -382,7 +421,7 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Resumo
@@ -410,7 +449,6 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
                                 value={form.getValues('content.sections.Sobre mim')}
                                 className="w-full"
                                 autoComplete="off"
-                                autoFocus
                                 required
                               />
                             </FormControl>
@@ -429,7 +467,7 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Habilidades Técnicas
@@ -478,7 +516,6 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
                                       className="w-full"
                                       placeholder={`Selecione as tags ou adicione novas`}
                                       value={form.getValues(`content.skills.${category}.${subcategory}`)}
-                                      autoFocus
                                       title="As tags devem conter apenas letras e espaços."
                                     />
                                   </div>
@@ -498,7 +535,7 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Experiência
@@ -742,7 +779,7 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Educação
@@ -952,7 +989,7 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Soft Skills
@@ -980,7 +1017,6 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
                                 value={form.getValues('content.sections.Soft Skills')}
                                 className="w-full"
                                 autoComplete="off"
-                                autoFocus
                                 required
                               />
                             </FormControl>
@@ -998,7 +1034,7 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Diferenciais
@@ -1026,7 +1062,6 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
                                 value={form.getValues('content.sections.Diferenciais')}
                                 className="w-full"
                                 autoComplete="off"
-                                autoFocus
                                 required
                               />
                             </FormControl>
@@ -1041,6 +1076,80 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
             </div>
           </CarouselItem>
 
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader className='mt-8'>
+                  <CardTitle>
+                    <h1>
+                      Gerar com IA
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione aqui os detalhes da vaga que você está se candidatando. Isso ajudará a IA a gerar um currículo mais personalizado e relevante para você.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="apiKey"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>GoogleAI API KEY:</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Insira sua chave de API aqui"
+                                onChange={(e) => form.setValue('apiKey', e.target.value)}
+                                value={form.getValues('apiKey')}
+                                className="w-full"
+                                autoComplete="off"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage className='text-sm text-gray-500 mt-1'>
+                              Você pode obter sua chave de API <a href="https://aistudio.google.com/app/u/1/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">aqui</a>.
+                            </FormMessage>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="jobDetails"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Detalhes da Vaga:</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Escreva os detalhes da vaga aqui"
+                                onChange={(e) => form.setValue('jobDetails', e.target.value)}
+                                value={form.getValues('jobDetails')}
+                                className="w-full"
+                                autoComplete="off"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        className='w-fit'
+                        type="button"
+                        onClick={handleGenerateWithAI}
+                        disabled={!form.getValues('jobDetails')}
+                      >
+                        Gerar Currículo com IA
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />

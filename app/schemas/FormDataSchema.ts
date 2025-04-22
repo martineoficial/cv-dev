@@ -47,4 +47,6 @@ export const FormDataSchema = z.object({
         })),
         skills: z.record(z.record(z.array(z.string()))),
     }),
+    jobDetails: z.string().optional(),
+    apiKey: z.string().optional(),
 });
