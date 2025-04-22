@@ -88,6 +88,7 @@ export default function CVPage() {
         }
     }, [pdfPreviewUrl]);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isGenerating, setIsGenerating] = useState(false);
 
     const handleGenerateWithAI = useCallback(async () => {
@@ -986,7 +987,7 @@ export default function CVPage() {
                         form.watch('content.experience') &&
                         form.watch('content.sections.Soft Skills') &&
                         form.watch('content.sections.Diferenciais') &&
-                         (
+                        (
                             <CarouselItem>
                                 <div className="p-1">
                                     <Card>
@@ -1069,7 +1070,17 @@ export default function CVPage() {
             </Carousel>
 
             {pdfPreviewUrl && (
-                <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[92vh] md:sticky md:top-0">
+                <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
+                    <div className="mt-1 mb-4 flex justify-between items-center">
+                        <Button
+                            variant="secondary"
+                            className='w-fit'
+                            onClick={handleDownload}
+                            disabled={!pdfPreviewUrl}
+                        >
+                            Baixar Currículo
+                        </Button>
+                    </div>
                     <div className="border border-gray-300 rounded overflow-hidden h-full">
                         <iframe
                             src={pdfPreviewUrl}
