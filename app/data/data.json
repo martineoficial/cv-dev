@@ -1,0 +1,118 @@
+{
+    "Frontend": {
+        "Linguagens": [
+            "JavaScript",
+            "ES6+",
+            "TypeScript",
+            "HTML5",
+            "CSS3",
+            "SASS",
+            "LESS",
+            "Flexbox",
+            "Style Components",
+            "CSS Modules"
+        ],
+        "Frameworks e Bibliotecas": [
+            "React.js",
+            "Vue.js",
+            "Angular",
+            "Next.js",
+            "Tailwind CSS",
+            "Styled Components",
+            "Bootstrap"
+        ],
+        "Gerenciamento de Estado": [
+            "Redux",
+            "Vuex"
+        ],
+        "Performance": [
+            "Lazy Loading",
+            "Code Splitting"
+        ],
+        "Acessibilidade e SEO": [
+            "Acessibilidade (WCAG)",
+            "SEO (Search Engine Optimization)"
+        ]
+    },
+    "Backend": {
+        "Linguagens": [
+            "Java",
+            "Spring Boot",
+            "Node.js",
+            "Express.js",
+            "Python",
+            "PHP"
+        ],
+        "APIs": [
+            "RESTful",
+            "GraphQL"
+        ],
+        "Autenticação": [
+            "JWT",
+            "OAuth 2.0"
+        ],
+        "Arquitetura": [
+            "Microservices",
+            "Serverless",
+            "Monólitos"
+        ],
+        "Messageria": [
+            "Kafka",
+            "RabbitMQ"
+        ]
+    },
+    "Banco de Dados": {
+        "Relacionais": [
+            "PostgreSQL",
+            "MySQL"
+        ],
+        "NoSQL": [
+            "MongoDB",
+            "Redis"
+        ],
+        "ORMs e Query Builders": [
+            "Sequelize",
+            "Prisma",
+            "Hibernate"
+        ]
+    },
+    "DevOps & Ferramentas": {
+        "Versionamento": [
+            "Git",
+            "GitHub",
+            "GitLab",
+            "Bitbucket"
+        ],
+        "Containers e CI/CD": [
+            "Docker",
+            "Kubernetes",
+            "GitHub Actions",
+            "Jenkins"
+        ],
+        "Cloud": [
+            "AWS",
+            "Azure"
+        ],
+        "Construção e automação": [
+            "Webpack",
+            "Babel",
+            "NPM",
+            "Yarn"
+        ]
+    },
+    "Testes & Qualidade": {
+        "Unitários": [
+            "Jest",
+            "JUnit",
+            "PyTest"
+        ],
+        "Integração e UI": [
+            "Cypress",
+            "Playwright"
+        ],
+        "Monitoramento": [
+            "Prometheus",
+            "Grafana"
+        ]
+    }
+}

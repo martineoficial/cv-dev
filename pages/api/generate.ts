@@ -1,9 +1,12 @@
+import { FormDataSchema } from '@/app/schemas/FormDataSchema';
+import type { FormData } from '@/app/types/types';
+import { capitalizeAllWords } from '@/app/utils/capitalize';
 import fs from 'fs';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 import PDFDocument from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
-
+import { Content } from 'pdfmake/interfaces';
 
 PDFDocument.vfs = pdfFonts.vfs;
 
@@ -29,68 +32,80 @@ export default async function handler(
 ) {
     if (req.method === 'POST') {
         try {
-            const formData = req.body;
-            const content = [];
+            const validationResult = FormDataSchema.safeParse(req.body);
 
-            if (formData.name) {
-                content.push({ text: formData.name, style: 'header' });
-            }
-            if (formData.title) {
-                content.push({ text: formData.title, style: 'subheader' });
+            if (!validationResult.success) {
+                console.error('Erro de validação:', validationResult.error);
+                return res.status(400).json({ error: 'Dados inválidos' });
             }
 
-            const contactInfo = [];
-            if (formData.email) {
-                contactInfo.push({
-                    text: formData.email,
-                    style: 'contactInfo',
-                    link: `mailto:${formData.email}`,
+            const formData: FormData = validationResult.data;
+
+            const pdfContent: Content[] = [];
+
+            if (formData.contactInfo.fullName) {
+                pdfContent.push({
+                    text: capitalizeAllWords(formData.contactInfo.fullName),
+                    style: 'fullName',
                 });
-            }
-            if (formData.phone) {
-                const phoneNumber = formData.phone.replace(/[\s-()]/g, '');
-                if (formData.phoneIsWhatsapp) {
-                    contactInfo.push({
-                        text: formData.phone,
-                        style: 'contactInfo',
-                        link: `https://wa.me/${phoneNumber}`,
-                    });
-                } else {
-                    contactInfo.push({
-                        text: formData.phone,
-                        style: 'contactInfo',
-                    });
-                }
-            }
-            if (formData.hasLinkedin && formData.linkedinUsername) {
-                const linkedinUrl = `https://linkedin.com/in/${formData.linkedinUsername}`;
-                contactInfo.push({
-                    text: `linkedin.com/in/${formData.linkedinUsername}`,
-                    style: 'contactInfo',
-                    link: linkedinUrl,
-                });
-            }
-            if (formData.hasGithub && formData.githubUsername) {
-                const githubUrl = `https://github.com/${formData.githubUsername}`;
-                contactInfo.push({
-                    text: `github.com/${formData.githubUsername}`,
-                    style: 'contactInfo',
-                    link: githubUrl,
-                });
-            }
-            if (contactInfo.length > 0) {
-                content.push({ stack: contactInfo, margin: [0, 0, 0, 0] });
             }
 
-            if (formData.sections['Sobre mim']) {
-                content.push({ text: 'Sobre mim', style: 'sectionHeader' });
-                content.push({ text: formData.sections['Sobre mim'] });
+            if (formData.contactInfo.title) {
+                pdfContent.push({
+                    text: capitalizeAllWords(formData.contactInfo.title),
+                    style: 'title',
+                });
+            }
+
+            if (formData.contactInfo.email) {
+                pdfContent.push({
+                    text: formData.contactInfo.email,
+                    style: 'contacts',
+                    link: `mailto:${formData.contactInfo.email}`,
+                });
+            }
+
+            if (formData.contactInfo.phone) {
+                pdfContent.push({
+                    text: formData.contactInfo.phone,
+                    style: 'contacts',
+                    link: formData.contactInfo.phoneIsWhatsapp
+                        ? `https://wa.me/${formData.contactInfo.phone}`
+                        : `tel:${formData.contactInfo.phone}`,
+                });
+            }
+
+            if (formData.contactInfo.linkedinUsername) {
+                pdfContent.push({
+                    text: `LinkedIn: ${formData.contactInfo.linkedinUsername}`,
+                    style: 'contacts',
+                    link: `https://www.linkedin.com/in/${formData.contactInfo.linkedinUsername}`,
+                });
+            }
+
+            if (formData.contactInfo.githubUsername) {
+                pdfContent.push({
+                    text: `GitHub: ${formData.contactInfo.githubUsername}`,
+                    style: 'contacts',
+                    link: `https://github.com/${formData.contactInfo.githubUsername}`,
+                });
+            }
+
+            if (formData.content.sections['Sobre mim']) {
+                pdfContent.push({
+                    text: 'Sobre mim',
+                    style: 'sectionTitle',
+                });
+                pdfContent.push({
+                    text: formData.content.sections['Sobre mim'],
+                    style: 'sectionContent',
+                });
             }
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const skillsContent = [] as any;
-            if (formData.skills) {
-                Object.entries(formData.skills).forEach(([category, subcategories]) => {
+            if (formData.content.skills) {
+                Object.entries(formData.content.skills).forEach(([category, subcategories]) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const categorySkills = [] as any;
                     Object.entries(subcategories || {}).forEach(([subcategory, skills]) => {
@@ -105,185 +120,121 @@ export default async function handler(
                 });
             }
             if (skillsContent.length > 0) {
-                content.push({ text: 'Habilidades Técnicas', style: 'sectionHeader' });
-                content.push(...skillsContent);
+                pdfContent.push({ text: 'Habilidades Técnicas', style: 'sectionHeader' });
+                pdfContent.push(...skillsContent);
             }
 
-            if (formData.experience && formData.experience.length > 0) {
-                const experienceContent = formData.experience
-                    .filter(
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (exp: any) =>
-                            exp.company ||
-                            exp.title ||
-                            (exp.startDate && exp.startDate.month && exp.startDate.year) ||
-                            (exp.endDate && (exp.endDate === 'Atual' || (exp.endDate.month && exp.endDate.year))) ||
-                            exp.description
-                    )
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .map((exp: any) => {
-                        const parts = [];
-                        if (exp.company) parts.push({ text: exp.company, style: 'experienceCompany' });
-                        if (exp.title) parts.push({ text: exp.title, style: 'experienceTitle' });
-                        const startDateValid = exp.startDate && exp.startDate.month && exp.startDate.year;
-                        const endDateValid =
-                            exp.endDate && (exp.endDate === 'Atual' || (exp.endDate.month && exp.endDate.year));
-                        if (startDateValid || endDateValid) {
-                            const startDate = startDateValid ? `${exp.startDate.month}/${exp.startDate.year}` : '';
-                            const endDate = endDateValid
-                                ? exp.endDate === 'Atual'
-                                    ? 'Atual'
-                                    : `${exp.endDate.month}/${exp.endDate.year}`
-                                : '';
-                            const period = `${startDate}${startDateValid && endDateValid ? ' - ' : ''}${endDate}`;
-                            if (period) parts.push({ text: period, style: 'experiencePeriod' });
-                        }
-                        if (exp.description)
-                            parts.push({ text: exp.description, style: 'experienceDescription', margin: [0, 5, 0, 10] });
-                        return parts.length > 0 ? parts : null;
-                    })
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .filter((item: any) => item !== null)
-                    .flat();
-
-                if (experienceContent.length > 0) {
-                    content.push({ text: 'Experiência Profissional', style: 'sectionHeader' });
-                    content.push(...experienceContent);
-                }
+            if (formData.content.experience && formData.content.experience.length > 0) {
+                pdfContent.push({ text: 'Experiência', style: 'sectionTitle' });
+                formData.content.experience.forEach((exp) => {
+                    const expContent = [];
+                    if (exp.company) {
+                        expContent.push({ text: exp.company, style: 'expCompany' });
+                    }
+                    if (exp.title) {
+                        expContent.push({ text: exp.title, style: 'expTitle' });
+                    }
+                    if (exp.startDate && exp.endDate) {
+                        expContent.push({ 
+                            text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - ${typeof exp.endDate === 'object' ? `${exp.endDate.month}/${exp.endDate.year}` : exp.endDate}`, 
+                            style: 'dateRange'
+                        });
+                    } else if (exp.startDate) {
+                        expContent.push({ text: `${exp.startDate.month} ${exp.startDate.year}`, style: 'dateRange' });
+                    }
+                    if (exp.description) {
+                        expContent.push({ text: exp.description, style: 'sectionContent' });
+                    }
+                    pdfContent.push({ stack: expContent, margin: [0, 0, 0, 10] });
+                });
             }
 
-            if (formData.education && formData.education.length > 0) {
-                const educationContent = formData.education
-                    .filter(
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (edu: any) =>
-                            edu.institution ||
-                            edu.degree ||
-                            (edu.startDate && edu.startDate.month && edu.startDate.year) ||
-                            (edu.endDate && (edu.endDate === 'Atual' || (edu.endDate.month && edu.endDate.year)))
-                    )
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .map((edu: any) => {
-                        const parts = [];
-                        if (edu.institution) parts.push({ text: edu.institution, style: 'educationInstitution' });
-                        if (edu.degree) parts.push({ text: edu.degree, style: 'educationDegree' });
-                        const startDateValid = edu.startDate && edu.startDate.month && edu.startDate.year;
-                        const endDateValid =
-                            edu.endDate && (edu.endDate === 'Atual' || (edu.endDate.month && edu.endDate.year));
-                        if (startDateValid || endDateValid) {
-                            const startDate = startDateValid ? `${edu.startDate.month}/${edu.startDate.year}` : '';
-                            const endDate = endDateValid
-                                ? edu.endDate === 'Atual'
-                                    ? 'Atual'
-                                    : `${edu.endDate.month}/${edu.endDate.year}`
-                                : '';
-                            const period = `${startDate}${startDateValid && endDateValid ? ' - ' : ''}${endDate}`;
-                            if (period) parts.push({ text: period, style: 'educationPeriod' });
-                        }
-                        if (edu.description)
-                            parts.push({ text: edu.description, style: 'educationDescription', margin: [0, 5, 0, 10] });
-                        return parts.length > 0 ? parts : null;
-                    })
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .filter((item: any) => item !== null)
-                    .flat();
-
-                if (educationContent.length > 0) {
-                    content.push({ text: 'Formação Acadêmica', style: 'sectionHeader' });
-                    content.push(...educationContent);
-                }
+            if (formData.content.education && formData.content.education.length > 0) {
+                pdfContent.push({ text: 'Educação', style: 'sectionTitle' });
+                formData.content.education.forEach((edu) => {
+                    const eduContent = [];
+                    if (edu.institution) {
+                        eduContent.push({ text: edu.institution, style: 'expCompany' });
+                    }
+                    if (edu.degree) {
+                        eduContent.push({ text: edu.degree, style: 'expTitle' });
+                    }
+                    if (edu.startDate && edu.endDate) {
+                        eduContent.push({ 
+                            text: `${typeof edu.startDate === 'object' ? `${edu.startDate.month}/${edu.startDate.year}` : edu.startDate} - ${typeof edu.endDate === 'object' ? `${edu.endDate.month}/${edu.endDate.year}` : edu.endDate}`, 
+                            style: 'dateRange'
+                        });
+                    } else if (edu.startDate) {
+                        eduContent.push({ text: `${edu.startDate.month} ${edu.startDate.year}`, style: 'dateRange' });
+                    }
+                    pdfContent.push({ stack: eduContent, margin: [0, 0, 0, 10] });
+                });
             }
 
-            if (formData.sections['Soft Skills']) {
-                content.push({ text: 'Soft Skills', style: 'sectionHeader' });
-                content.push({ text: formData.sections['Soft Skills'] });
+            if (formData.content.sections['Soft Skills']) {
+                pdfContent.push({ text: 'Soft Skills', style: 'sectionTitle' });
+                pdfContent.push({ text: formData.content.sections['Soft Skills'], style: 'sectionContent' });
             }
-
-            if (formData.sections['Diferenciais']) {
-                content.push({ text: 'Diferenciais', style: 'sectionHeader' });
-                content.push({ text: formData.sections['Diferenciais'] });
+            if (formData.content.sections['Diferenciais']) {
+                pdfContent.push({ text: 'Diferenciais', style: 'sectionTitle' });
+                pdfContent.push({ text: formData.content.sections['Diferenciais'], style: 'sectionContent' });
             }
 
             const pdfDoc = PDFDocument.createPdf({
-                content: content,
+                content: pdfContent,
                 styles: {
-                    header: {
-                        fontSize: 24,
+                    fullName: {
+                        fontSize: 20,
                         bold: true,
-                        margin: [0, 0, 0, 8],
-                        color: '#0D0126',
+                        margin: [0, 0, 0, 5],
                     },
-                    subheader: {
+                    title: {
                         fontSize: 16,
-                        bold: false,
+                        italics: true,
                         margin: [0, 0, 0, 10],
-                        color: '#FF66C4',
                     },
-                    sectionHeader: {
-                        fontSize: 16,
-                        bold: true,
-                        margin: [0, 15, 0, 8],
-                        color: '#FF66C4',
-                    },
-                    contactInfo: {
-                        fontSize: 10,
-                        marginBottom: 2,
-                        color: '#1A1038',
-                    },
-                    experienceCompany: {
+                    contacts: {
                         fontSize: 12,
-                        bold: true,
-                        color: '#1A1038',
-                        margin: [0, 5, 0, 0],
+                        margin: [0, 0, 0, 5],
+                        color: '#555',
                     },
-                    experienceTitle: {
-                        fontSize: 11,
-                        italics: true,
-                        color: '#1A1038',
-                        margin: [0, 3, 0, 0],
-                    },
-                    experiencePeriod: {
-                        fontSize: 10,
-                        color: '#777',
-                        margin: [0, 2, 0, 5],
-                    },
-                    experienceDescription: {
-                        fontSize: 10,
-                        color: '#333',
-                        margin: [0, 0, 0, 8],
-                    },
-                    educationInstitution: {
-                        fontSize: 12,
-                        bold: true,
-                        color: '#1A1038',
-                        margin: [0, 5, 0, 0],
-                    },
-                    educationDegree: {
-                        fontSize: 11,
-                        italics: true,
-                        color: '#1A1038',
-                        margin: [0, 3, 0, 0],
-                    },
-                    educationPeriod: {
-                        fontSize: 10,
-                        color: '#777',
-                        margin: [0, 2, 0, 5],
-                    },
-                    educationDescription: {
-                        fontSize: 10,
-                        color: '#333',
-                        margin: [0, 0, 0, 8],
-                    },
-                    skillCategory: {
+                    sectionTitle: {
                         fontSize: 14,
                         bold: true,
                         margin: [0, 10, 0, 5],
-                        color: '#1A1038',
+                    },
+                    sectionContent: {
+                        fontSize: 12,
+                        margin: [0, 0, 0, 10],
+                    },
+                    sectionHeader: {
+                        fontSize: 14,
+                        bold: true,
+                        margin: [0, 10, 0, 5],
+                    },
+                    skillCategory: {
+                        fontSize: 12,
+                        bold: true,
+                        margin: [0, 10, 0, 5],
                     },
                     skillSubcategoryText: {
-                        fontSize: 11,
-                        margin: [0, 2, 0, 2],
-                        color: '#333',
+                        fontSize: 12,
+                        margin: [0, 0, 0, 5],
+                    },
+                    expCompany: {
+                        fontSize: 12,
+                        bold: true,
+                        margin: [0, 0, 0, 5],
+                    },
+                    expTitle: {
+                        fontSize: 12,
+                        italics: true,
+                        margin: [0, 0, 0, 5],
+                    },
+                    dateRange: {
+                        fontSize: 12,
+                        margin: [0, 0, 0, 5],
+                        color: '#777',
                     },
                 },
                 defaultStyle: {
@@ -298,9 +249,11 @@ export default async function handler(
                 res.setHeader('Content-Disposition', 'attachment; filename=curriculo.pdf');
                 res.send(buffer);
             });
+
         } catch (error) {
             console.error('Erro ao gerar o PDF:', error);
-            res.status(500).send('Erro ao gerar o PDF');
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            res.status(500).json({ error: 'Erro ao gerar o PDF', details: errorMessage });
         }
     } else {
         res.setHeader('Allow', ['POST']);

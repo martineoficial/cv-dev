@@ -1,365 +1,46 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react';
-
-const skillsOptions = {
-  "Frontend": {
-    "Linguagens": [
-      "JavaScript",
-      "ES6+",
-      "TypeScript",
-      "HTML5",
-      "CSS3",
-      "SASS",
-      "LESS",
-      "Flexbox",
-      "Style Components",
-      "CSS Modules"
-    ],
-    "Frameworks e Bibliotecas": [
-      "React.js",
-      "Vue.js",
-      "Angular",
-      "Next.js",
-      "Tailwind CSS",
-      "Styled Components",
-      "Bootstrap"
-    ],
-    "Gerenciamento de Estado": [
-      "Redux",
-      "Vuex"
-    ],
-    "Performance": [
-      "Lazy Loading",
-      "Code Splitting"
-    ],
-    "Acessibilidade e SEO": [
-      "Acessibilidade (WCAG)",
-      "SEO (Search Engine Optimization)"
-    ]
-  },
-  "Backend": {
-    "Linguagens": [
-      "Java",
-      "Spring Boot",
-      "Node.js",
-      "Express.js",
-      "Python",
-      "PHP"
-    ],
-    "APIs": [
-      "RESTful",
-      "GraphQL"
-    ],
-    "Autenticação": [
-      "JWT",
-      "OAuth 2.0"
-    ],
-    "Arquitetura": [
-      "Microservices",
-      "Serverless",
-      "Monólitos"
-    ],
-    "Messageria": [
-      "Kafka",
-      "RabbitMQ"
-    ]
-  },
-  "Banco de Dados": {
-    "Relacionais": [
-      "PostgreSQL",
-      "MySQL"
-    ],
-    "NoSQL": [
-      "MongoDB",
-      "Redis"
-    ],
-    "ORMs e Query Builders": [
-      "Sequelize",
-      "Prisma",
-      "Hibernate"
-    ]
-  },
-  "DevOps & Ferramentas": {
-    "Versionamento": [
-      "Git",
-      "GitHub",
-      "GitLab",
-      "Bitbucket"
-    ],
-    "Containers e CI/CD": [
-      "Docker",
-      "Kubernetes",
-      "GitHub Actions",
-      "Jenkins"
-    ],
-    "Cloud": [
-      "AWS",
-      "Azure"
-    ],
-    "Construção e automação": [
-      "Webpack",
-      "Babel",
-      "NPM",
-      "Yarn"
-    ]
-  },
-  "Testes & Qualidade": {
-    "Unitários": [
-      "Jest",
-      "JUnit",
-      "PyTest"
-    ],
-    "Integração e UI": [
-      "Cypress",
-      "Playwright"
-    ],
-    "Monitoramento": [
-      "Prometheus",
-      "Grafana"
-    ]
-  },
-  "Marketing": {
-    "Marketing Digital": [
-      "Inbound Marketing",
-      "Outbound Marketing",
-      "Marketing de Conteúdo",
-      "Marketing de Afiliados",
-      "Marketing de Performance",
-      "Automação de Marketing",
-      "E-mail Marketing"
-    ],
-    "SEO": [
-      "SEO On-page",
-      "SEO Off-page",
-      "SEO Técnico",
-      "Pesquisa de Palavras-chave",
-      "Análise de Concorrência (SEO)"
-    ],
-    "Mídias Sociais": [
-      "Marketing de Mídias Sociais",
-      "Gestão de Comunidades",
-      "Publicidade em Mídias Sociais (Facebook Ads, Instagram Ads, LinkedIn Ads)",
-      "Monitoramento de Marca"
-    ],
-    "Tráfego Pago": [
-      "Google Ads (Search, Display, Shopping, Video)",
-      "Facebook Ads",
-      "Instagram Ads",
-      "LinkedIn Ads",
-      "Geração de Leads",
-      "Otimização de Campanhas (CRO)"
-    ],
-    "Analytics": [
-      "Google Analytics",
-      "Google Tag Manager",
-      "Data Studio / Looker Studio",
-      "Análise de Dados",
-      "Relatórios de Marketing"
-    ],
-    "Ferramentas de Marketing": [
-      "CRM (Customer Relationship Management)",
-      "Ferramentas de Automação (HubSpot, Mailchimp, RD Station)",
-      "Ferramentas de SEO (SEMrush, Ahrefs, Moz)",
-      "Ferramentas de Mídias Sociais (Hootsuite, Buffer)",
-      "Plataformas de E-commerce (Shopify, WooCommerce)"
-    ],
-    "Estratégia": [
-      "Planejamento de Marketing",
-      "Definição de KPIs",
-      "Pesquisa de Mercado",
-      "Segmentação de Público",
-      "Análise SWOT",
-      "Branding"
-    ],
-    "Conteúdo": [
-      "Criação de Conteúdo (Blog Posts, Ebooks, Infográficos)",
-      "Copywriting",
-      "Marketing de Vídeo",
-      "Otimização de Conteúdo"
-    ]
-  }
-}
+import intialSkillsOptions from '@/app/data/data.json';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { FormDataSchema } from './schemas/FormDataSchema';
+import { Textarea } from '@/components/ui/textarea';
+import { MultiSelect } from './components/multi-select/multi-select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 
 export default function CVPage() {
-  interface Experience {
-    company: string;
-    title: string;
-    startDate: { month: string; year: string };
-    endDate: { month: string; year: string } | 'Atual';
-    description: string;
-    isCurrent?: boolean;
-  }
-
-  interface Education {
-    institution: string;
-    degree: string;
-    startDate: { month: string; year: string };
-    endDate: { month: string; year: string } | 'Atual';
-    description?: string;
-  }
-
-  interface FormData {
-    name: string;
-    title: string;
-    email: string;
-    phone: string;
-    phoneIsWhatsapp: boolean;
-    linkedinUsername: string;
-    githubUsername: string;
-    hasLinkedin: boolean;
-    hasGithub: boolean;
-    sections: {
-      'Sobre mim': string;
-      'Soft Skills': string;
-      'Diferenciais': string;
-    };
-    experience: Experience[];
-    education: Education[];
-    skills: {
-      [category: string]: {
-        [subcategory: string]: string[];
-      };
-    };
-  }
-
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    title: '',
-    email: '',
-    phone: '',
-    phoneIsWhatsapp: false,
-    linkedinUsername: '',
-    githubUsername: '',
-    hasLinkedin: false,
-    hasGithub: false,
-    sections: {
-      'Sobre mim': ``,
-      'Soft Skills': ``,
-      'Diferenciais': ``,
-    },
-    experience: [
-      {
-        company: '',
+  const form = useForm({
+    resolver: zodResolver(FormDataSchema),
+    defaultValues: {
+      contactInfo: {
+        fullName: '',
         title: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: ``,
-        isCurrent: false,
-      }
-    ],
-    education: [
-      {
-        institution: '',
-        degree: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: ''
-      }
-    ],
-    skills: Object.fromEntries(
-      Object.entries(skillsOptions).map(([category, subcategories]) => [
-        category,
-        Object.fromEntries(Object.keys(subcategories).map(sub => [sub, []]))
-      ])
-    ) as FormData['skills'],
-  });
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement
-    setFormData(prev => {
-      if (type === 'checkbox') {
-        return { ...prev, [name]: checked };
-      } else if (name in prev.sections) {
-        return { ...prev, sections: { ...prev.sections, [name]: value } };
-      } else {
-        return { ...prev, [name]: value };
-      }
-    });
-  }
-
-  const handleSkillCheckboxChange = (category: string, subcategory: string, skill: string) => {
-    setFormData(prev => {
-      const currentSkills = prev.skills[category][subcategory] || [];
-      const updatedSkills = currentSkills.includes(skill)
-        ? currentSkills.filter(s => s !== skill)
-        : [...currentSkills, skill];
-      return {
-        ...prev,
-        skills: {
-          ...prev.skills,
-          [category]: { ...prev.skills[category], [subcategory]: updatedSkills },
+        email: '',
+        phone: '',
+        phoneIsWhatsapp: false,
+        linkedinUsername: '',
+        hasLinkedin: false,
+      },
+      content: {
+        sections: {
+          'Sobre mim': ``,
+          'Soft Skills': ``,
+          'Diferenciais': ``,
         },
-      };
-    });
-  }
+        experience: [],
+        education: [],
+        skills: {},
+      },
+    },
+  });
 
-  const handleExperienceChange = (index: number, field: keyof Experience, value: string | { month: string; year: string } | 'Atual' | boolean) => {
-    setFormData(prev => {
-      const newExperience = [...prev.experience];
-      if (field === 'isCurrent' && typeof value === 'boolean') {
-        newExperience[index].isCurrent = value;
-        if (value) {
-          newExperience[index].endDate = 'Atual';
-        } else if (newExperience[index].endDate === 'Atual') {
-          newExperience[index].endDate = { month: '', year: '' };
-        }
-      } else {
-        (newExperience[index][field] as typeof value) = value;
-      }
-      return { ...prev, experience: newExperience };
-    });
-  };
-
-  const addExperience = () => {
-    setFormData(prev => ({
-      ...prev,
-      experience: [...prev.experience, {
-        company: '',
-        title: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: '',
-        isCurrent: false,
-      }]
-    }));
-  };
-
-  const removeExperience = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      experience: prev.experience.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleEducationChange = (index: number, field: keyof Education, value: string | { month: string; year: string } | 'Atual' | undefined) => {
-    setFormData(prev => {
-      const newEducation = [...prev.education];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      newEducation[index][field] = value as any; // Type assertion
-      return { ...prev, education: newEducation };
-    });
-  };
-
-  const addEducation = () => {
-    setFormData(prev => ({
-      ...prev,
-      education: [...prev.education, {
-        institution: '',
-        degree: '',
-        startDate: { month: '', year: '' },
-        endDate: { month: '', year: '' },
-        description: ''
-      }]
-    }));
-  };
-
-  const removeEducation = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      education: prev.education.filter((_, i) => i !== index)
-    }));
-  };
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
   const generatePdf = useCallback(async () => {
     setPdfPreviewUrl(null);
@@ -367,307 +48,932 @@ export default function CVPage() {
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(form.getValues()),
     });
+    console.log('response', response);
 
-    const blob = await response.blob();
+    const blob = await response.blob()
+    console.log('blob', blob);
 
     const url = window.URL.createObjectURL(blob);
     console.log('url', url);
+
     setPdfPreviewUrl(url);
-  }, [formData]);
+  }, [form]);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    console.clear();
+    const subscription = form.watch((value) => {
+      console.log('Form values changed:', value);
       generatePdf();
-    }, 500); // 500ms de delay após a última mudança
-
-    return () => clearTimeout(timeoutId); // Limpa o timeout se o componente for desmontado ou formData mudar antes do timeout
-  }, [formData, generatePdf]);
-
-  const handleDownload = () => {
-    if (pdfPreviewUrl) {
-      const link = document.createElement('a');
-      link.href = pdfPreviewUrl;
-      link.download = 'curriculo.pdf';
-      link.click();
-    }
-  };
-
-  const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => String(2000 + i)).reverse();
+    });
+    return () => subscription.unsubscribe();
+  }, [form, generatePdf]);
 
   return (
     <div className="min-h-screen bg-[#0D0126] text-white p-6 flex flex-col md:flex-row">
-      <div className="max-w-2xl w-full md:w-1/2 pr-6 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-[#FF66C4] mb-6">cv.dev</h1>
-        <h2 className="text-2xl text-[#FF66C4] font-bold mb-4">Instruções</h2>
-        <p className="mb-4">Preencha os campos abaixo para gerar seu currículo em PDF. O preview será atualizado automaticamente.</p>
+      <Carousel className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 md:sticky md:top-0">
+        <CarouselContent>
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Informações Pessoais
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Preencha os campos abaixo para gerar seu currículo em PDF. O preview será atualizado automaticamente.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.fullName"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Full Name:</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Digite seu nome completo"
+                                onChange={(e) => form.setValue('contactInfo.fullName', e.target.value)}
+                                value={form.getValues('contactInfo.fullName')}
+                                className="w-full"
+                                type="text"
+                                autoComplete="off"
+                                autoFocus
+                                required
+                                maxLength={50}
+                                minLength={3}
+                                pattern="^[a-zA-ZÀ-ÿ\s]+$"
+                                title="O nome deve conter apenas letras e espaços."
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-        <div className="flex flex-col gap-4 mb-6">
-          <h2 className="text-2xl text-[#FF66C4] font-bold mb-2 md:col-span-2">Informações Pessoais</h2>
-          <input name="name" placeholder="Nome" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.name} />
-          <input name="title" placeholder="Título Profissional" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.title} />
-          <input name="email" placeholder="Email" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.email} />
-          <input name="phone" placeholder="Telefone: +99 99 99999-9999" pattern="^\+55 \d{2} \d{5}-\d{4}$" title="Formato: +55 81 99993-4299" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.phone} />
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" name="phoneIsWhatsapp" checked={formData.phoneIsWhatsapp} onChange={handleChange} className="accent-[#FF66C4]" />
-            <span>Número é WhatsApp</span>
-          </label>
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.title"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Título:</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Desenvolvedor Frontend"
+                                onChange={(e) => form.setValue('contactInfo.title', e.target.value)}
+                                value={form.getValues('contactInfo.title')}
+                                className="w-full"
+                                type="text"
+                                autoComplete="off"
+                                required
+                                maxLength={50}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
 
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" name="hasLinkedin" checked={formData.hasLinkedin} onChange={handleChange} className="accent-[#FF66C4]" />
-            <span>Possui LinkedIn</span>
-          </label>
-          {formData.hasLinkedin && (
-            <input name="linkedinUsername" placeholder="LinkedIn Username" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.linkedinUsername} />
-          )}
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Informações de Contato
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas informações de contato, como email, telefone e redes sociais. Isso ajudará os recrutadores a entrarem em contato com você.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.email"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Email:</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Digite seu email"
+                                onChange={(e) => form.setValue('contactInfo.email', e.target.value)}
+                                value={form.getValues('contactInfo.email')}
+                                className="w-full"
+                                type="email"
+                                autoComplete="off"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" name="hasGithub" checked={formData.hasGithub} onChange={handleChange} className="accent-[#FF66C4]" />
-            <span>Possui GitHub</span>
-          </label>
-          {formData.hasGithub && (
-            <input name="githubUsername" placeholder="GitHub Username" className="p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.githubUsername} />
-          )}
-        </div>
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.phone"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Telefone:</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Digite DDI, DDD e número"
+                                onChange={(e) => form.setValue('contactInfo.phone', e.target.value)}
+                                value={form.getValues('contactInfo.phone')}
+                                className="w-full"
+                                type="tel"
+                                autoComplete="off"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-        <div className="mt-4 flex flex-col gap-4">
-          <div className="mb-4">
-            <label className="block mb-1 text-[#FF66C4] font-bold">Sobre mim</label>
-            <textarea name="Sobre mim" rows={4} className="w-full p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.sections['Sobre mim']} />
-          </div>
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.phoneIsWhatsapp"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormLabel>WhatsApp:</FormLabel>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormItem>
+                        )}
+                      />
 
-          <div className="mb-4">
-            <h2 className="text-2xl text-[#FF66C4] font-bold mb-2">Habilidades Técnicas</h2>
-            {Object.entries(skillsOptions).map(([category, subcategories]) => (
-              <div key={category} className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">{category}</h3>
-                {Object.entries(subcategories).map(([subcategory, options]) => (
-                  <div key={subcategory} className="mb-3">
-                    <label className="block mb-1 font-medium italic">{subcategory}</label>
-                    <div className="flex flex-wrap gap-2">
-                      {options.map(option => (
-                        <label key={option} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            value={option}
-                            checked={formData.skills[category]?.[subcategory]?.includes(option)}
-                            onChange={() => handleSkillCheckboxChange(category, subcategory, option)}
-                            className="accent-[#FF66C4]"
-                          />
-                          <span>{option}</span>
-                        </label>
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.hasLinkedin"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormLabel>Possui LinkedIn:</FormLabel>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormItem>
+                        )}
+                      />
+                      {form.watch('contactInfo.hasLinkedin') && (
+                        <FormField
+                          control={form.control}
+                          name="contactInfo.linkedinUsername"
+                          render={() => (
+                            <FormItem>
+                              <FormLabel>LinkedIn:</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Digite seu usuário do LinkedIn"
+                                  onChange={(e) => form.setValue('contactInfo.linkedinUsername', e.target.value)}
+                                  value={form.getValues('contactInfo.linkedinUsername')}
+                                  className="w-full"
+                                  type="text"
+                                  autoComplete="off"
+                                  required
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      <FormField
+                        control={form.control}
+                        name="contactInfo.hasGithub"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormLabel>Possui GitHub:</FormLabel>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormItem>
+                        )}
+                      />
+                      {form.watch('contactInfo.hasGithub') && (
+                        <FormField
+                          control={form.control}
+                          name="contactInfo.githubUsername"
+                          render={() => (
+                            <FormItem>
+                              <FormLabel>GitHub:</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Digite seu usuário do GitHub"
+                                  onChange={(e) => form.setValue('contactInfo.githubUsername', e.target.value)}
+                                  value={form.getValues('contactInfo.githubUsername')}
+                                  className="w-full"
+                                  type="text"
+                                  autoComplete="off"
+                                  required
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Resumo
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Escreva um resumo sobre você, suas experiências e habilidades. O resumo deve ser breve e impactante.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="content.sections.Sobre mim"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Sobre mim:</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Escreva o seu resumo aqui"
+                                onChange={(e) => form.setValue('content.sections.Sobre mim', e.target.value)}
+                                value={form.getValues('content.sections.Sobre mim')}
+                                className="w-full"
+                                autoComplete="off"
+                                autoFocus
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Habilidades Técnicas
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas habilidades técnicas, como linguagens de programação, frameworks e ferramentas. Isso ajudará os recrutadores a entenderem suas competências técnicas.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      {Object.entries(intialSkillsOptions).map(([category, subcategories]) => (
+                        <div key={category} className="mb-6">
+                          <Accordion type="single" collapsible className='w-full'>
+                            <AccordionItem value={category} className='w-full'>
+                              <AccordionTrigger className='w-full'>
+                                <div className="flex items-center justify-between w-full">
+                                  <h3 className="text-xl font-semibold mb-2">{category}</h3>
+                                  <span className="text-sm text-gray-400">{Object.values(subcategories).flat().length} tags</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                {Object.entries(subcategories).map(([subcategory, options]) => (
+                                  <div key={subcategory} className="mb-3">
+                                    <label className="block mb-1 font-medium italic">{subcategory}</label>
+                                    <MultiSelect
+                                      options={
+                                        options.map(option => ({
+                                          value: option,
+                                          label: option,
+                                        }))
+                                      }
+                                      defaultValue={form.getValues(`content.skills.${category}.${subcategory}`)}
+                                      onValueChange={(selectedOptions) => {
+                                        const selectedValues = selectedOptions.map(option => option.valueOf());
+                                        form.setValue(`content.skills.${category}.${subcategory}`, selectedValues);
+                                      }}
+                                      onNewOption={(newOption) => {
+                                        const newOptions = [...options, newOption];
+                                        form.setValue(`content.skills.${category}.${subcategory}`, newOptions);
+                                        form.setValue(`content.skills.${category}.${subcategory}`, newOptions);
+                                      }}
+                                      className="w-full"
+                                      placeholder={`Selecione as tags ou adicione novas`}
+                                      value={form.getValues(`content.skills.${category}.${subcategory}`)}
+                                      autoFocus
+                                      title="As tags devem conter apenas letras e espaços."
+                                    />
+                                  </div>
+                                ))}
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
                       ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
 
-          <div className="mb-4">
-            <h2 className="text-2xl text-[#FF66C4] font-bold mb-2">Experiência Profissional</h2>
-            {formData.experience.map((exp, index) => (
-              <div key={index} className="mb-4 p-4 border border-gray-300 rounded">
-                <h3 className="text-xl font-semibold mb-2">Experiência {index + 1}</h3>
-                <div className="flex flex-col gap-4">
-                  <input
-                    type="text"
-                    placeholder="Companhia/Empresa"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={exp.company}
-                    onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Cargo"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={exp.title}
-                    onChange={(e) => handleExperienceChange(index, 'title', e.target.value)}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.startDate.month}
-                      onChange={(e) => handleExperienceChange(index, 'startDate', { ...exp.startDate, month: e.target.value })}
-                    >
-                      <option value="" disabled>Mês Início</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.startDate.year}
-                      onChange={(e) => handleExperienceChange(index, 'startDate', { ...exp.startDate, year: e.target.value })}
-                    >
-                      <option value="" disabled>Ano Início</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.endDate === 'Atual' ? 'Atual' : (typeof exp.endDate === 'object' ? exp.endDate.month : '')}
-                      onChange={(e) => handleExperienceChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof exp.endDate === 'object' ? exp.endDate : { month: '', year: '' }), month: e.target.value })}
-                      disabled={exp.isCurrent}
-                    >
-                      <option value="" disabled>Mês Fim</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                      <option value="Atual">Atual</option>
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={exp.endDate === 'Atual' ? String(currentYear) : (typeof exp.endDate === 'object' ? exp.endDate.year : '')}
-                      onChange={(e) => handleExperienceChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof exp.endDate === 'object' ? exp.endDate : { month: '', year: '' }), year: e.target.value })}
-                      disabled={exp.isCurrent}
-                    >
-                      <option value="" disabled>Ano Fim</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <label className="flex items-center space-x-2 justify-end sm:justify-start">
-                    <input
-                      type="checkbox"
-                      checked={exp.isCurrent || false}
-                      onChange={(e) => handleExperienceChange(index, 'isCurrent', e.target.checked)}
-                      className="accent-[#FF66C4]"
-                    />
-                    <span>Atual</span>
-                  </label>
-                  <textarea
-                    placeholder="Descrição das Atividades Exercidas"
-                    rows={4}
-                    className="w-full p-2 rounded bg-[#1A1038] text-white col-span-2"
-                    value={exp.description}
-                    onChange={(e) => handleExperienceChange(index, 'description', e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 bg-red-500 text-white font-bold px-4 py-2 rounded hover:bg-red-700 transition w-full sm:w-auto"
-                  onClick={() => removeExperience(index)}
-                >
-                  Remover Experiência
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="mt-2 bg-[#1A1038] text-white font-bold px-4 py-2 rounded hover:bg-gray-700 transition w-full sm:w-auto"
-              onClick={addExperience}
-            >
-              Adicionar Experiência
-            </button>
-          </div>
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Experiência
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas experiências profissionais, incluindo cargos, empresas e datas. Isso ajudará os recrutadores a entenderem seu histórico profissional.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      {form.watch('content.experience').map((experience, index) => (
+                        <div key={index} className="mb-6">
+                          <Accordion type="single" collapsible className='w-full'>
+                            <AccordionItem value={`experience-${index}`} className='w-full'>
+                              <AccordionTrigger className='w-full'>
+                                <div className="flex items-center justify-between w-full">
+                                  <h3 className="text-xl font-semibold mb-2">{experience.company || 'Experiência'}</h3>
+                                  <span className="text-sm text-gray-400">{experience.title || 'Cargo'}</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.company`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Empresa:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite o nome da empresa"
+                                          onChange={(e) => form.setValue(`content.experience.${index}.company`, e.target.value)}
+                                          value={form.getValues(`content.experience.${index}.company`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
 
-          <div className="mb-4">
-            <h2 className="text-2xl text-[#FF66C4] font-bold mb-2">Formação Acadêmica</h2>
-            {formData.education.map((edu, index) => (
-              <div key={index} className="mb-4 p-4 border border-gray-300 rounded">
-                <h3 className="text-xl font-semibold mb-2">Formação {index + 1}</h3>
-                <div className="flex flex-col gap-4">
-                  <input
-                    type="text"
-                    placeholder="Instituição de Ensino"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={edu.institution}
-                    onChange={(e) => handleEducationChange(index, 'institution', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Grau ou Título"
-                    className="p-2 rounded bg-[#1A1038] text-white"
-                    value={edu.degree}
-                    onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.startDate.month}
-                      onChange={(e) => handleEducationChange(index, 'startDate', { ...edu.startDate, month: e.target.value })}
-                    >
-                      <option value="" disabled>Mês Início</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.startDate.year}
-                      onChange={(e) => handleEducationChange(index, 'startDate', { ...edu.startDate, year: e.target.value })}
-                    >
-                      <option value="" disabled>Ano Início</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.endDate === 'Atual' ? 'Atual' : (typeof edu.endDate === 'object' ? edu.endDate.month : '')}
-                      onChange={(e) => handleEducationChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof edu.endDate === 'object' ? edu.endDate : { month: '', year: '' }), month: e.target.value })}
-                    >
-                      <option value="" disabled>Mês Fim</option>
-                      {months.map(month => <option key={month} value={month}>{month}</option>)}
-                      <option value="Atual">Atual</option>
-                    </select>
-                    <select
-                      className="p-2 rounded bg-[#1A1038] text-white"
-                      value={edu.endDate === 'Atual' ? String(currentYear) : (typeof edu.endDate === 'object' ? edu.endDate.year : '')}
-                      onChange={(e) => handleEducationChange(index, 'endDate', e.target.value === 'Atual' ? 'Atual' : { ...(typeof edu.endDate === 'object' ? edu.endDate : { month: '', year: '' }), year: e.target.value })}
-                      disabled={edu.endDate === 'Atual'}
-                    >
-                      <option value="" disabled>Ano Fim</option>
-                      {years.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </div>
-                  <textarea
-                    placeholder="Descrição (opcional)"
-                    rows={2}
-                    className="w-full p-2 rounded bg-[#1A1038] text-white col-span-2"
-                    value={edu.description}
-                    onChange={(e) => handleEducationChange(index, 'description', e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 bg-red-500 text-white font-bold px-4 py-2 rounded hover:bg-red-700 transition w-full sm:w-auto"
-                  onClick={() => removeEducation(index)}
-                >
-                  Remover Formação
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="mt-2 bg-[#1A1038] text-white font-bold px-4 py-2 rounded hover:bg-gray-700 transition w-full sm:w-auto"
-              onClick={addEducation}
-            >
-              Adicionar Formação
-            </button>
-          </div>
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.title`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Cargo:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite seu cargo"
+                                          onChange={(e) => form.setValue(`content.experience.${index}.title`, e.target.value)}
+                                          value={form.getValues(`content.experience.${index}.title`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
 
-          <div className="mb-4">
-            <label className="block mb-1 text-[#FF66C4] font-bold">Soft Skills</label>
-            <textarea name="Soft Skills" rows={4} className="w-full p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.sections['Soft Skills']} />
-          </div>
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.startDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Início"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.startDate.month`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.startDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.startDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Início"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.startDate.year`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.startDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
 
-          <div className="mb-4">
-            <label className="block mb-1 text-[#FF66C4] font-bold">Diferenciais</label>
-            <textarea name="Diferenciais" rows={4} className="w-full p-2 rounded bg-[#1A1038] text-white" onChange={handleChange} value={formData.sections['Diferenciais']} />
-          </div>
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.endDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Término"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.endDate.month`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.endDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.experience.${index}.endDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Término"
+                                              onChange={(e) => form.setValue(`content.experience.${index}.endDate.year`, e.target.value)}
+                                              value={form.getValues(`content.experience.${index}.endDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.description`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Descrição:</FormLabel>
+                                      <FormControl>
+                                        <Textarea
+                                          placeholder="Digite a descrição da experiência"
+                                          onChange={(e) => form.setValue(`content.experience.${index}.description`, e.target.value)}
+                                          value={form.getValues(`content.experience.${index}.description`)}
+                                          className="w-full"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.isCurrent`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2 mb-4">
+                                      <FormLabel>Experiência Atual:</FormLabel>
+                                      <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormItem>
+                                  )}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    const updatedExperience = form.getValues('content.experience');
+                                    updatedExperience.splice(index, 1);
+                                    form.setValue('content.experience', updatedExperience);
+                                  }}
+                                >
+                                  Remover Experiência
+                                </Button>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
+                      ))}
+                      <Button
+                        className='w-fit'
+                        type="button"
+                        onClick={() => {
+                          const updatedExperience = form.getValues('content.experience');
+                          updatedExperience.push({
+                            company: '',
+                            title: '',
+                            startDate: { month: '', year: '' },
+                            endDate: { month: '', year: '' },
+                            description: '',
+                            isCurrent: false,
+                          });
+                          form.setValue('content.experience', updatedExperience);
+                        }}
+                      >
+                        Adicionar Experiência
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
 
-          <button
-            onClick={handleDownload}
-            className="mt-6 bg-[#FF66C4] text-black font-bold px-6 py-2 rounded hover:bg-pink-400 transition w-full sm:w-auto"
-            disabled={!pdfPreviewUrl}
-          >
-            Baixar PDF
-          </button>
-        </div>
-      </div>
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Educação
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas informações educacionais, incluindo cursos, instituições e datas. Isso ajudará os recrutadores a entenderem sua formação acadêmica.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      {form.watch('content.education').map((education, index) => (
+                        <div key={index} className="mb-6">
+                          <Accordion type="single" collapsible className='w-full'>
+                            <AccordionItem value={`education-${index}`} className='w-full'>
+                              <AccordionTrigger className='w-full'>
+                                <div className="flex items-center justify-between w-full">
+                                  <h3 className="text-xl font-semibold mb-2">{education.institution || 'Educação'}</h3>
+                                  <span className="text-sm text-gray-400">{education.degree || 'Curso'}</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <FormField
+                                  control={form.control}
+                                  name={`content.education.${index}.institution`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Instituição:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite o nome da instituição"
+                                          onChange={(e) => form.setValue(`content.education.${index}.institution`, e.target.value)}
+                                          value={form.getValues(`content.education.${index}.institution`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name={`content.education.${index}.degree`}
+                                  render={() => (
+                                    <FormItem className='mb-4'>
+                                      <FormLabel>Curso:</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite seu curso"
+                                          onChange={(e) => form.setValue(`content.education.${index}.degree`, e.target.value)}
+                                          value={form.getValues(`content.education.${index}.degree`)}
+                                          className="w-full"
+                                          type="text"
+                                          autoComplete="off"
+                                          required
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                {/* Add start date */}
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.startDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Início"
+                                              onChange={(e) => form.setValue(`content.education.${index}.startDate.month`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.startDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.startDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Início:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Início"
+                                              onChange={(e) => form.setValue(`content.education.${index}.startDate.year`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.startDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                {/* Add end date */}
+                                <div className="flex gap-4 mb-4">
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.endDate.month`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Mês de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Mês de Término"
+                                              onChange={(e) => form.setValue(`content.education.${index}.endDate.month`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.endDate.month`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <FormField
+                                      control={form.control}
+                                      name={`content.education.${index}.endDate.year`}
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel>Ano de Término:</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="Ano de Término"
+                                              onChange={(e) => form.setValue(`content.education.${index}.endDate.year`, e.target.value)}
+                                              value={form.getValues(`content.education.${index}.endDate.year`)}
+                                              className="w-full"
+                                              type="text"
+                                              autoComplete="off"
+                                              required
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    const updatedEducation = form.getValues('content.education');
+                                    updatedEducation.splice(index, 1);
+                                    form.setValue('content.education', updatedEducation);
+                                  }}
+                                >
+                                  Remover Curso
+                                </Button>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
+                      ))}
+                      <Button
+                        className='w-fit'
+                        type="button"
+                        onClick={() => {
+                          const updatedEducation = form.getValues('content.education');
+                          updatedEducation.push({
+                            institution: '',
+                            degree: '',
+                            startDate: { month: '', year: '' },
+                            endDate: { month: '', year: '' },
+                          });
+                          form.setValue('content.education', updatedEducation);
+                        }}
+                      >
+                        Adicionar Curso
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Soft Skills
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione suas soft skills, como comunicação, trabalho em equipe e liderança. Isso ajudará os recrutadores a entenderem suas habilidades interpessoais.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="content.sections.Soft Skills"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Soft Skills:</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Escreva suas soft skills aqui"
+                                onChange={(e) => form.setValue('content.sections.Soft Skills', e.target.value)}
+                                value={form.getValues('content.sections.Soft Skills')}
+                                className="w-full"
+                                autoComplete="off"
+                                autoFocus
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <h1>
+                      Diferenciais
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      Adicione seus diferenciais, como cursos, certificações e prêmios. Isso ajudará os recrutadores a entenderem o que o torna único.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <Form {...form}>
+                    <form className='w-full flex flex-col gap-4'>
+                      <FormField
+                        control={form.control}
+                        name="content.sections.Diferenciais"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Diferenciais:</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Escreva seus diferenciais aqui"
+                                onChange={(e) => form.setValue('content.sections.Diferenciais', e.target.value)}
+                                value={form.getValues('content.sections.Diferenciais')}
+                                className="w-full"
+                                autoComplete="off"
+                                autoFocus
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
 
       {pdfPreviewUrl && (
-        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
-          <h2 className="text-2xl text-[#FF66C4] font-bold mb-4">Preview do Currículo</h2>
+        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[92vh] md:sticky md:top-0">
           <div className="border border-gray-300 rounded overflow-hidden h-full">
             <iframe
               src={pdfPreviewUrl}
