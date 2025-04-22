@@ -1,18 +1,18 @@
 'use client'
-import intialSkillsOptions from '@/app/data/data.json';
+import initialSkillsOptions from '@/app/data/data.json';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { FormDataSchema } from './schemas/FormDataSchema';
-import { Textarea } from '@/components/ui/textarea';
 import { MultiSelect } from './components/multi-select/multi-select';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
+import { FormDataSchema } from './schemas/FormDataSchema';
 
 export default function CVPage() {
   const form = useForm({
@@ -23,7 +23,7 @@ export default function CVPage() {
         title: '',
         email: '',
         phone: '',
-        phoneIsWhatsapp: false,
+        phoneIsWhatsapp: true,
         linkedinUsername: '',
         hasLinkedin: false,
       },
@@ -50,25 +50,51 @@ export default function CVPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.getValues()),
     });
-    console.log('response', response);
 
     const blob = await response.blob()
-    console.log('blob', blob);
-
     const url = window.URL.createObjectURL(blob);
-    console.log('url', url);
+    setPdfPreviewUrl(url);
+  }, [form]);
 
+  const generatePdfWithAI = useCallback(async () => {
+    setPdfPreviewUrl(null);
+
+    const response = await fetch('/api/generateWithAI', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form.getValues()),
+    });
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob);
     setPdfPreviewUrl(url);
   }, [form]);
 
   useEffect(() => {
-    console.clear();
-    const subscription = form.watch((value) => {
-      console.log('Form values changed:', value);
+    const subscription = form.watch(() => {
       generatePdf();
     });
     return () => subscription.unsubscribe();
   }, [form, generatePdf]);
+
+  const handleDownload = useCallback(() => {
+    if (pdfPreviewUrl) {
+      const link = document.createElement('a');
+      link.href = pdfPreviewUrl;
+      link.download = 'cv.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }, [pdfPreviewUrl]);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateWithAI = useCallback(async () => {
+    setIsGenerating(true);
+    await generatePdfWithAI();
+    setIsGenerating(false);
+  }, [generatePdfWithAI]);
 
   return (
     <div className="min-h-screen bg-[#0D0126] text-white p-6 flex flex-col md:flex-row">
@@ -77,7 +103,31 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
+                  <CardTitle>
+                    <h1>
+                      Seja Bem-Vindo(a) ao cv-dev
+                    </h1>
+                  </CardTitle>
+                  <CardDescription className='mt-4'>
+                    <p>
+                      O cv-dev é uma ferramenta inovadora que permite criar currículos personalizados e profissionais de forma rápida e fácil. Com uma interface intuitiva e recursos avançados, você pode destacar suas habilidades, experiências e conquistas de maneira eficaz.
+                    </p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex p-6">
+                  <p>
+                    Para começar, preencha as informações pessoais e profissionais nos campos abaixo. O preview do seu currículo será atualizado automaticamente à medida que você preenche os dados. Você pode adicionar experiências, habilidades e muito mais!
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+
+          <CarouselItem>
+            <div className="p-1">
+              <Card>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Informações Pessoais
@@ -97,7 +147,7 @@ export default function CVPage() {
                         name="contactInfo.fullName"
                         render={() => (
                           <FormItem>
-                            <FormLabel>Full Name:</FormLabel>
+                            <FormLabel>Nome Completo:</FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Digite seu nome completo"
@@ -106,7 +156,6 @@ export default function CVPage() {
                                 className="w-full"
                                 type="text"
                                 autoComplete="off"
-                                autoFocus
                                 required
                                 maxLength={50}
                                 minLength={3}
@@ -151,7 +200,7 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Informações de Contato
@@ -308,7 +357,7 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Resumo
@@ -336,7 +385,6 @@ export default function CVPage() {
                                 value={form.getValues('content.sections.Sobre mim')}
                                 className="w-full"
                                 autoComplete="off"
-                                autoFocus
                                 required
                               />
                             </FormControl>
@@ -355,7 +403,7 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Habilidades Técnicas
@@ -370,7 +418,7 @@ export default function CVPage() {
                 <CardContent className="flex p-6">
                   <Form {...form}>
                     <form className='w-full flex flex-col gap-4'>
-                      {Object.entries(intialSkillsOptions).map(([category, subcategories]) => (
+                      {Object.entries(initialSkillsOptions).map(([category, subcategories]) => (
                         <div key={category} className="mb-6">
                           <Accordion type="single" collapsible className='w-full'>
                             <AccordionItem value={category} className='w-full'>
@@ -404,7 +452,6 @@ export default function CVPage() {
                                       className="w-full"
                                       placeholder={`Selecione as tags ou adicione novas`}
                                       value={form.getValues(`content.skills.${category}.${subcategory}`)}
-                                      autoFocus
                                       title="As tags devem conter apenas letras e espaços."
                                     />
                                   </div>
@@ -424,7 +471,7 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Experiência
@@ -668,7 +715,7 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Educação
@@ -878,7 +925,7 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Soft Skills
@@ -906,7 +953,6 @@ export default function CVPage() {
                                 value={form.getValues('content.sections.Soft Skills')}
                                 className="w-full"
                                 autoComplete="off"
-                                autoFocus
                                 required
                               />
                             </FormControl>
@@ -924,7 +970,7 @@ export default function CVPage() {
           <CarouselItem>
             <div className="p-1">
               <Card>
-                <CardHeader>
+                <CardHeader className='mt-8'>
                   <CardTitle>
                     <h1>
                       Diferenciais
@@ -952,7 +998,6 @@ export default function CVPage() {
                                 value={form.getValues('content.sections.Diferenciais')}
                                 className="w-full"
                                 autoComplete="off"
-                                autoFocus
                                 required
                               />
                             </FormControl>
@@ -967,13 +1012,111 @@ export default function CVPage() {
             </div>
           </CarouselItem>
 
+          {
+            form.watch('contactInfo.fullName') &&
+            form.watch('contactInfo.title') &&
+            form.watch('contactInfo.email') &&
+            form.watch('contactInfo.phone') &&
+            form.watch('content.sections.Sobre mim') &&
+            form.watch('content.skills') &&
+            form.watch('content.education') &&
+            form.watch('content.experience') &&
+            form.watch('content.sections.Soft Skills') &&
+            form.watch('content.sections.Diferenciais') &&
+            (
+              <CarouselItem>
+                <div className="p-1">
+                  <Card>
+                    <CardHeader className='mt-8'>
+                      <CardTitle>
+                        <h1>
+                          Gerar com IA
+                        </h1>
+                      </CardTitle>
+                      <CardDescription className='mt-4'>
+                        <p>
+                          Adicione aqui os detalhes da vaga que você está se candidatando. Isso ajudará a IA a gerar um currículo mais personalizado e relevante para você.
+                        </p>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex p-6">
+                      <Form {...form}>
+                        <form className='w-full flex flex-col gap-4'>
+                          <FormField
+                            control={form.control}
+                            name="apiKey"
+                            render={() => (
+                              <FormItem>
+                                <FormLabel>GoogleAI API KEY:</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Insira sua chave de API aqui"
+                                    onChange={(e) => form.setValue('apiKey', e.target.value)}
+                                    value={form.getValues('apiKey')}
+                                    className="w-full"
+                                    autoComplete="off"
+                                    required
+                                  />
+                                </FormControl>
+                                <FormMessage className='text-sm text-gray-500 mt-1'>
+                                  Você pode obter sua chave de API <a href="https://aistudio.google.com/app/u/1/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">aqui</a>.
+                                </FormMessage>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="jobDetails"
+                            render={() => (
+                              <FormItem>
+                                <FormLabel>Detalhes da Vaga:</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="Escreva os detalhes da vaga aqui"
+                                    onChange={(e) => form.setValue('jobDetails', e.target.value)}
+                                    value={form.getValues('jobDetails')}
+                                    className="w-full"
+                                    autoComplete="off"
+                                    required
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button
+                            className='w-fit'
+                            type="button"
+                            onClick={handleGenerateWithAI}
+                            disabled={!form.getValues('jobDetails')}
+                          >
+                            Gerar Currículo com IA
+                          </Button>
+                        </form>
+                      </Form>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CarouselItem>
+            )
+          }
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
       </Carousel>
 
       {pdfPreviewUrl && (
-        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[92vh] md:sticky md:top-0">
+        <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
+          <div className="mt-1 mb-4 flex justify-between items-center">
+            <Button
+              variant="secondary"
+              className='w-fit'
+              onClick={handleDownload}
+              disabled={!pdfPreviewUrl}
+            >
+              Baixar Currículo
+            </Button>
+          </div>
           <div className="border border-gray-300 rounded overflow-hidden h-full">
             <iframe
               src={pdfPreviewUrl}

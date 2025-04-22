@@ -2,10 +2,10 @@ import { z } from "zod";
 
 export const FormDataSchema = z.object({
     contactInfo: z.object({
-        fullName: z.string().optional(),
-        title: z.string().optional(),
-        email: z.string().optional(),
-        phone: z.string().optional(),
+        fullName: z.string(),
+        title: z.string(),
+        email: z.string(),
+        phone: z.string(),
         phoneIsWhatsapp: z.boolean().optional(),
         linkedinUsername: z.string().optional(),
         githubUsername: z.string().optional(),
@@ -14,37 +14,39 @@ export const FormDataSchema = z.object({
     }),
     content: z.object({
         sections: z.object({
-            'Sobre mim': z.string().optional(),
-            'Soft Skills': z.string().optional(),
-            'Diferenciais': z.string().optional(),
+            'Sobre mim': z.string(),
+            'Soft Skills': z.string(),
+            'Diferenciais': z.string(),
         }),
         experience: z.array(z.object({
-            company: z.string().optional(),
-            title: z.string().optional(),
+            company: z.string(),
+            title: z.string(),
             startDate: z.object({
-                month: z.string().optional(),
-                year: z.string().optional(),
+                month: z.string(),
+                year: z.string(),
             }),
             endDate: z.union([z.object({
-                month: z.string().optional(),
-                year: z.string().optional(),
+                month: z.string(),
+                year: z.string(),
             }), z.literal('Atual')]).optional(),
             description: z.string().optional(),
             isCurrent: z.boolean().optional(),
         })),
         education: z.array(z.object({
-            institution: z.string().optional(),
-            degree: z.string().optional(),
+            institution: z.string(),
+            degree: z.string(),
             startDate: z.object({
-                month: z.string().optional(),
-                year: z.string().optional(),
+                month: z.string(),
+                year: z.string(),
             }),
             endDate: z.union([z.object({
-                month: z.string().optional(),
-                year: z.string().optional(),
+                month: z.string(),
+                year: z.string(),
             }), z.literal('Atual')]).optional(),
             description: z.string().optional(),
         })),
         skills: z.record(z.record(z.array(z.string()))),
     }),
+    jobDetails: z.string().optional(),
+    apiKey: z.string().optional(),
 });
