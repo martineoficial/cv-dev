@@ -71,7 +71,13 @@ export default function CVPage() {
     }, [form]);
 
     useEffect(() => {
+        const storedData = localStorage.getItem('formData');
+        if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            form.reset(parsedData);
+        }
         const subscription = form.watch(() => {
+            localStorage.setItem('formData', JSON.stringify(form.getValues()));
             generatePdf();
         });
         return () => subscription.unsubscribe();
