@@ -88,6 +88,7 @@ export default function CVPage() {
     }
   }, [pdfPreviewUrl]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerateWithAI = useCallback(async () => {
