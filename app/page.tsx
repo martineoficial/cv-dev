@@ -19,90 +19,26 @@ export default function CVPage() {
     resolver: zodResolver(FormDataSchema),
     defaultValues: {
       contactInfo: {
-        fullName: 'Diana Martine Blyza Pontes',
-        title: 'Analista de Engenharia de Software',
-        email: 'diana_martine@outlook.com',
-        phone: '+5581999934299',
+        fullName: '',
+        title: '',
+        email: '',
+        phone: '',
         phoneIsWhatsapp: true,
-        linkedinUsername: 'martineoficial',
-        hasLinkedin: true,
-        githubUsername: 'martineoficial',
-        hasGithub: true,
+        linkedinUsername: '',
+        hasLinkedin: false,
       },
       content: {
         sections: {
-          'Sobre mim': `Sou desenvolvedora front-end com vasta experiência na criação de interfaces de usuário ricas e responsivas, com foco em performance e escalabilidade. Ao longo da minha trajetória, contribuí para o desenvolvimento de soluções inovadoras utilizando JavaScript, React e outras ferramentas modernas. Tenho experiência colaborando com equipes de design e back-end para garantir a viabilidade técnica dos projetos, implementando soluções alinhadas às necessidades dos usuários e otimizadas para uma experiência fluida.
-
-Na Elo Serviços S.A., trabalhei no desenvolvimento de interfaces em React, e fui responsável pela integração de APIs, garantindo funcionalidades escaláveis e de alta performance. Na Accenture, também contribuí para o desenvolvimento de interfaces de usuário e participei de diversas etapas do ciclo de vida do software, incluindo revisões de código e implementação de funcionalidades sustentáveis.
-
-Com um forte compromisso com o código limpo, bem documentado e de fácil manutenção, estou sempre em busca de me manter atualizada com as últimas tendências e melhores práticas do mercado de desenvolvimento front-end.
-`,
-          'Soft Skills': `- Resolução de Problemas e Pensamento Crítico - Trabalho em Equipe e Comunicação
-- Aprendizado Contínuo e Adaptabilidade
-- Foco no Produto e Experiência do Usuário`,
-          'Diferenciais': `- Conhecimento em Arquitetura de Software e Segurança (OWASP, CSRF) - Experiência Full Stack e boas práticas de desenvolvimento
-- Inglês B2 (leitura, escrita e comunicação técnica)`,
+          'Sobre mim': ``,
+          'Soft Skills': ``,
+          'Diferenciais': ``,
         },
-        experience: [{
-          company: 'Elo Serviços S.A.',
-          title: 'Analista de Engenharia de Software Pleno',
-          startDate: { month: 'Janeiro', year: '2022' },
-          endDate: { month: 'Outubro', year: '2024' },
-          description: `- Desenvolvimento de recursos voltados ao usuário para plataformas web usando JavaScript e React, garantindo uma experiência fluida e otimizada.
-- Colaboração com designers e desenvolvedores de back-end para implementar soluções inovadoras, integrando APIs e trabalhando com programação assíncrona.
-- Foco em otimizar a velocidade e escalabilidade das aplicações, garantindo performance máxima em todas as funcionalidades.
-- Participação ativa em revisões de código para garantir a qualidade e a manutenção do código, além de fornecer feedback construtivo para os colegas.
-- Garantia da viabilidade técnica dos designs UI/UX, trabalhando de perto com a equipe de design. - Adoção de práticas de código limpo, bem documentado e sustentável, com foco em manutenção de longo prazo.
-`,
-          isCurrent: false,
-        }, {
-          company: 'Accenture',
-          title: 'Desenvolvedora de Aplicações',
-          startDate: { month: 'Junho', year: '2021' },
-          endDate: { month: 'Janeiro', year: '2022' },
-          description: `- Desenvolvimento de interfaces de usuário com React.js e integração com back-end utilizando Java.
-- Participação no ciclo de vida completo do software, incluindo a documentação técnica, revisões de código e melhoria contínua dos processos.
-- Implementação de funcionalidades escaláveis e otimização de performance para melhorar a experiência do usuário.
-- Colaboração com a equipe para manter a qualidade do código e promover soluções de fácil manutenção e escalabilidade.
-`,
-          isCurrent: false,
-        }],
-        education: [{
-          degree: 'Tecnólogo em Análise e Desenvolvimento de Sistemas',
-          institution: 'UNINABUCO',
-          startDate: { month: 'Janeiro', year: '2020' },
-          endDate: { month: 'Outubro', year: '2024' },
-        }],
-        skills: initialSkillsOptions
+        experience: [],
+        education: [],
+        skills: {},
       },
-      jobDetails: '',
-      apiKey: process.env.API_KEY || '',
     },
   });
-  // const form = useForm({
-  //   resolver: zodResolver(FormDataSchema),
-  //   defaultValues: {
-  //     contactInfo: {
-  //       fullName: '',
-  //       title: '',
-  //       email: '',
-  //       phone: '',
-  //       phoneIsWhatsapp: true,
-  //       linkedinUsername: '',
-  //       hasLinkedin: false,
-  //     },
-  //     content: {
-  //       sections: {
-  //         'Sobre mim': ``,
-  //         'Soft Skills': ``,
-  //         'Diferenciais': ``,
-  //       },
-  //       experience: [],
-  //       education: [],
-  //       skills: {},
-  //     },
-  //   },
-  // });
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
@@ -1076,80 +1012,94 @@ Com um forte compromisso com o código limpo, bem documentado e de fácil manute
             </div>
           </CarouselItem>
 
-          <CarouselItem>
-            <div className="p-1">
-              <Card>
-                <CardHeader className='mt-8'>
-                  <CardTitle>
-                    <h1>
-                      Gerar com IA
-                    </h1>
-                  </CardTitle>
-                  <CardDescription className='mt-4'>
-                    <p>
-                      Adicione aqui os detalhes da vaga que você está se candidatando. Isso ajudará a IA a gerar um currículo mais personalizado e relevante para você.
-                    </p>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex p-6">
-                  <Form {...form}>
-                    <form className='w-full flex flex-col gap-4'>
-                      <FormField
-                        control={form.control}
-                        name="apiKey"
-                        render={() => (
-                          <FormItem>
-                            <FormLabel>GoogleAI API KEY:</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Insira sua chave de API aqui"
-                                onChange={(e) => form.setValue('apiKey', e.target.value)}
-                                value={form.getValues('apiKey')}
-                                className="w-full"
-                                autoComplete="off"
-                                required
-                              />
-                            </FormControl>
-                            <FormMessage className='text-sm text-gray-500 mt-1'>
-                              Você pode obter sua chave de API <a href="https://aistudio.google.com/app/u/1/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">aqui</a>.
-                            </FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="jobDetails"
-                        render={() => (
-                          <FormItem>
-                            <FormLabel>Detalhes da Vaga:</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Escreva os detalhes da vaga aqui"
-                                onChange={(e) => form.setValue('jobDetails', e.target.value)}
-                                value={form.getValues('jobDetails')}
-                                className="w-full"
-                                autoComplete="off"
-                                required
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        className='w-fit'
-                        type="button"
-                        onClick={handleGenerateWithAI}
-                        disabled={!form.getValues('jobDetails')}
-                      >
-                        Gerar Currículo com IA
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </div>
-          </CarouselItem>
+          {
+            form.watch('contactInfo.fullName') &&
+            form.watch('contactInfo.title') &&
+            form.watch('contactInfo.email') &&
+            form.watch('contactInfo.phone') &&
+            form.watch('content.sections.Sobre mim') &&
+            form.watch('content.skills') &&
+            form.watch('content.education') &&
+            form.watch('content.experience') &&
+            form.watch('content.sections.Soft Skills') &&
+            form.watch('content.sections.Diferenciais') &&
+            (
+              <CarouselItem>
+                <div className="p-1">
+                  <Card>
+                    <CardHeader className='mt-8'>
+                      <CardTitle>
+                        <h1>
+                          Gerar com IA
+                        </h1>
+                      </CardTitle>
+                      <CardDescription className='mt-4'>
+                        <p>
+                          Adicione aqui os detalhes da vaga que você está se candidatando. Isso ajudará a IA a gerar um currículo mais personalizado e relevante para você.
+                        </p>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex p-6">
+                      <Form {...form}>
+                        <form className='w-full flex flex-col gap-4'>
+                          <FormField
+                            control={form.control}
+                            name="apiKey"
+                            render={() => (
+                              <FormItem>
+                                <FormLabel>GoogleAI API KEY:</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Insira sua chave de API aqui"
+                                    onChange={(e) => form.setValue('apiKey', e.target.value)}
+                                    value={form.getValues('apiKey')}
+                                    className="w-full"
+                                    autoComplete="off"
+                                    required
+                                  />
+                                </FormControl>
+                                <FormMessage className='text-sm text-gray-500 mt-1'>
+                                  Você pode obter sua chave de API <a href="https://aistudio.google.com/app/u/1/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">aqui</a>.
+                                </FormMessage>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="jobDetails"
+                            render={() => (
+                              <FormItem>
+                                <FormLabel>Detalhes da Vaga:</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="Escreva os detalhes da vaga aqui"
+                                    onChange={(e) => form.setValue('jobDetails', e.target.value)}
+                                    value={form.getValues('jobDetails')}
+                                    className="w-full"
+                                    autoComplete="off"
+                                    required
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button
+                            className='w-fit'
+                            type="button"
+                            onClick={handleGenerateWithAI}
+                            disabled={!form.getValues('jobDetails')}
+                          >
+                            Gerar Currículo com IA
+                          </Button>
+                        </form>
+                      </Form>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CarouselItem>
+            )
+          }
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
