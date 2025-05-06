@@ -134,7 +134,13 @@ export default async function handler(
                     if (exp.title) {
                         expContent.push({ text: exp.title, style: 'expTitle' });
                     }
-                    if (exp.startDate && exp.endDate) {
+
+                    if (exp.startDate && exp.isCurrent) {
+                        expContent.push({ 
+                            text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - Atual`, 
+                            style: 'dateRange'
+                        });
+                    } else if (exp.startDate && exp.endDate) {
                         expContent.push({ 
                             text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - ${typeof exp.endDate === 'object' ? `${exp.endDate.month}/${exp.endDate.year}` : exp.endDate}`, 
                             style: 'dateRange'
@@ -142,6 +148,7 @@ export default async function handler(
                     } else if (exp.startDate) {
                         expContent.push({ text: `${exp.startDate.month} ${exp.startDate.year}`, style: 'dateRange' });
                     }
+                    
                     if (exp.description) {
                         expContent.push({ text: exp.description, style: 'sectionContent' });
                     }

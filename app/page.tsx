@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { MultiSelect } from './components/multi-select/multi-select';
 import { FormDataSchema } from './schemas/FormDataSchema';
+import Loading from './loading';
 
 export default function CVPage() {
   const form = useForm({
@@ -41,9 +42,12 @@ export default function CVPage() {
   });
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const generatePdf = useCallback(async () => {
     setPdfPreviewUrl(null);
+    setLoading(true);
 
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -54,10 +58,13 @@ export default function CVPage() {
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob);
     setPdfPreviewUrl(url);
+    setLoading(false);
+    setIsSuccess(true);
   }, [form]);
 
   const generatePdfWithAI = useCallback(async () => {
     setPdfPreviewUrl(null);
+    setLoading(true);
 
     const response = await fetch('/api/generateWithAI', {
       method: 'POST',
@@ -65,9 +72,19 @@ export default function CVPage() {
       body: JSON.stringify(form.getValues()),
     });
 
+    if (!response.ok) {
+      setLoading(false);
+      setIsSuccess(false);
+      console.error('Error generating PDF with AI:', response.statusText);
+      alert('Erro ao gerar o PDF com IA. Tente novamente mais tarde.');
+      return;
+    }
+
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob);
     setPdfPreviewUrl(url);
+    setLoading(false);
+    setIsSuccess(true);
   }, [form]);
 
   useEffect(() => {
@@ -252,7 +269,7 @@ export default function CVPage() {
                             <FormLabel>Telefone:</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Digite DDI, DDD e número"
+                                placeholder="Digite DDI, DDD e número, ex: +5511912345678"
                                 onChange={(e) => form.setValue('contactInfo.phone', e.target.value)}
                                 value={form.getValues('contactInfo.phone')}
                                 className="w-full"
@@ -597,54 +614,72 @@ export default function CVPage() {
                                   </div>
                                 </div>
 
-                                <div className="flex gap-4 mb-4">
-                                  <div className="flex-1">
-                                    <FormField
-                                      control={form.control}
-                                      name={`content.experience.${index}.endDate.month`}
-                                      render={() => (
-                                        <FormItem>
-                                          <FormLabel>Mês de Término:</FormLabel>
-                                          <FormControl>
-                                            <Input
-                                              placeholder="Mês de Término"
-                                              onChange={(e) => form.setValue(`content.experience.${index}.endDate.month`, e.target.value)}
-                                              value={form.getValues(`content.experience.${index}.endDate.month`)}
-                                              className="w-full"
-                                              type="text"
-                                              autoComplete="off"
-                                              required
-                                            />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
+                                <FormField
+                                  control={form.control}
+                                  name={`content.experience.${index}.isCurrent`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2 mb-4">
+                                      <FormLabel>Experiência Atual:</FormLabel>
+                                      <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                {!form.watch(`content.experience.${index}.isCurrent`) && (
+                                  <div className="flex gap-4 mb-4">
+                                    <div className="flex-1">
+                                      <FormField
+                                        control={form.control}
+                                        name={`content.experience.${index}.endDate.month`}
+                                        render={() => (
+                                          <FormItem>
+                                            <FormLabel>Mês de Término:</FormLabel>
+                                            <FormControl>
+                                              <Input
+                                                placeholder="Mês de Término"
+                                                onChange={(e) => form.setValue(`content.experience.${index}.endDate.month`, e.target.value)}
+                                                value={form.getValues(`content.experience.${index}.endDate.month`)}
+                                                className="w-full"
+                                                type="text"
+                                                autoComplete="off"
+                                                required
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                    </div>
+
+                                    <div className="flex-1">
+                                      <FormField
+                                        control={form.control}
+                                        name={`content.experience.${index}.endDate.year`}
+                                        render={() => (
+                                          <FormItem>
+                                            <FormLabel>Ano de Término:</FormLabel>
+                                            <FormControl>
+                                              <Input
+                                                placeholder="Ano de Término"
+                                                onChange={(e) => form.setValue(`content.experience.${index}.endDate.year`, e.target.value)}
+                                                value={form.getValues(`content.experience.${index}.endDate.year`)}
+                                                className="w-full"
+                                                type="text"
+                                                autoComplete="off"
+                                                required
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                    </div>
                                   </div>
-                                  <div className="flex-1">
-                                    <FormField
-                                      control={form.control}
-                                      name={`content.experience.${index}.endDate.year`}
-                                      render={() => (
-                                        <FormItem>
-                                          <FormLabel>Ano de Término:</FormLabel>
-                                          <FormControl>
-                                            <Input
-                                              placeholder="Ano de Término"
-                                              onChange={(e) => form.setValue(`content.experience.${index}.endDate.year`, e.target.value)}
-                                              value={form.getValues(`content.experience.${index}.endDate.year`)}
-                                              className="w-full"
-                                              type="text"
-                                              autoComplete="off"
-                                              required
-                                            />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                  </div>
-                                </div>
+                                )}
+                                
                                 <FormField
                                   control={form.control}
                                   name={`content.experience.${index}.description`}
@@ -662,19 +697,6 @@ export default function CVPage() {
                                         />
                                       </FormControl>
                                       <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={form.control}
-                                  name={`content.experience.${index}.isCurrent`}
-                                  render={({ field }) => (
-                                    <FormItem className="flex items-center space-x-2 mb-4">
-                                      <FormLabel>Experiência Atual:</FormLabel>
-                                      <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
                                     </FormItem>
                                   )}
                                 />
@@ -1112,6 +1134,16 @@ export default function CVPage() {
         <CarouselNext />
       </Carousel>
 
+      {
+        loading && (
+          <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
+            <div className="mt-1 mb-4 flex justify-between items-center">
+              <Loading />
+            </div>
+          </div>
+        )
+      }
+
       {pdfPreviewUrl && (
         <div className="w-full md:w-1/2 pl-0 md:pl-6 mt-6 md:mt-0 h-[85vh] md:sticky md:top-0">
           <div className="mt-1 mb-4 flex justify-between items-center">
@@ -1121,7 +1153,7 @@ export default function CVPage() {
               onClick={handleDownload}
               disabled={!pdfPreviewUrl}
             >
-              Baixar Currículo
+              {isSuccess ? 'Baixar Currículo' : 'Erro ao gerar, tente novamente'}
             </Button>
           </div>
           <div className="border border-gray-300 rounded overflow-hidden h-full">

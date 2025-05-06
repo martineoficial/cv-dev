@@ -107,44 +107,20 @@ export default async function handler(
                     });
                 }
 
-                const skillsContent = [];
                 if (formData.content.skills) {
-                    const allSkills = [];
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    for (const [category, subcategories] of Object.entries(formData.content.skills)) {
-                        for (const [subcategory, skills] of Object.entries(subcategories || {})) {
-                            if (skills && skills.length > 0) {
-                                allSkills.push(`${subcategory}: ${skills.join(', ')}`);
-                            }
-                        }
+                    const skillsInput = Object.entries(formData.content.skills).map(([category, subcategories]) => {
+                        const subcategorySkills = Object.entries(subcategories || {}).map(([subcategory, skills]) => {
+                            return skills && skills.length > 0 ? `${subcategory}: ${skills.join(', ')}` : null;
+                        }).filter(Boolean);
+                        return subcategorySkills.length > 0 ? `${category}: ${subcategorySkills.join('; ')}` : null;
+                    }).filter(Boolean).join('\n');
+
+                    const enhancedSkillsText = await run(formData.jobDetails, skillsInput, formData.apiKey);
+
+                    if (enhancedSkillsText) {
+                        pdfContent.push({ text: 'Habilidades Técnicas', style: 'sectionHeader' });
+                        pdfContent.push({ text: enhancedSkillsText, style: 'sectionContent' });
                     }
-                    if (allSkills.length > 0) {
-                        const processedSkills = await run(
-                            formData.jobDetails,
-                            allSkills.join('\n'),
-                            formData.apiKey
-                        );
-                        const processedSkillsArray = processedSkills.split('\n');
-                        let skillIndex = 0;
-                        for (const [category, subcategories] of Object.entries(formData.content.skills)) {
-                            const categorySkills = [];
-                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                            for (const subcategory of Object.keys(subcategories || {})) {
-                                if (skillIndex < processedSkillsArray.length) {
-                                    categorySkills.push({ text: processedSkillsArray[skillIndex], style: 'skillSubcategoryText' });
-                                    skillIndex++;
-                                }
-                            }
-                            if (categorySkills.length > 0) {
-                                skillsContent.push({ text: category, style: 'skillCategory' });
-                                skillsContent.push({ stack: categorySkills, margin: [10, 0, 0, 5] as [number, number, number, number] });
-                            }
-                        }
-                    }
-                }
-                if (skillsContent.length > 0) {
-                    pdfContent.push({ text: 'Habilidades Técnicas', style: 'sectionHeader' });
-                    pdfContent.push(...skillsContent as Content[]);
                 }
 
                 if (formData.content.experience && formData.content.experience.length > 0) {
@@ -157,14 +133,21 @@ export default async function handler(
                         if (exp.title) {
                             expContent.push({ text: exp.title, style: 'expTitle' });
                         }
-                        if (exp.startDate && exp.endDate) {
-                            expContent.push({
-                                text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - ${typeof exp.endDate === 'object' ? `${exp.endDate.month}/${exp.endDate.year}` : exp.endDate}`,
+
+                        if (exp.startDate && exp.isCurrent) {
+                            expContent.push({ 
+                                text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - Atual`, 
+                                style: 'dateRange'
+                            });
+                        } else if (exp.startDate && exp.endDate) {
+                            expContent.push({ 
+                                text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - ${typeof exp.endDate === 'object' ? `${exp.endDate.month}/${exp.endDate.year}` : exp.endDate}`, 
                                 style: 'dateRange'
                             });
                         } else if (exp.startDate) {
                             expContent.push({ text: `${exp.startDate.month} ${exp.startDate.year}`, style: 'dateRange' });
                         }
+                        
                         if (exp.description) {
                             expContent.push({ text: exp.description, style: 'sectionContent' });
                         }
