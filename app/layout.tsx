@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "cv dev generator",
   description: "Gerador de currículos para desenvolvedores",
   icons: {
-    icon: "https://github.com/martnie-coding",
+    icon: "https://github.com/martine-coding",
   }
 };
 
