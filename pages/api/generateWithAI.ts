@@ -109,21 +109,34 @@ export default async function handler(
 
                 const skillsContent = [];
                 if (formData.content.skills) {
+                    const allSkills = [];
                     for (const [category, subcategories] of Object.entries(formData.content.skills)) {
-                        const categorySkills = [];
                         for (const [subcategory, skills] of Object.entries(subcategories || {})) {
                             if (skills && skills.length > 0) {
-                                const processedSkills = await run(
-                                    formData.jobDetails,
-                                    skills.join(', '),
-                                    formData.apiKey
-                                );
-                                categorySkills.push({ text: `${subcategory}: ${processedSkills}`, style: 'skillSubcategoryText' });
+                                allSkills.push(`${subcategory}: ${skills.join(', ')}`);
                             }
                         }
-                        if (categorySkills.length > 0) {
-                            skillsContent.push({ text: category, style: 'skillCategory' });
-                            skillsContent.push({ stack: categorySkills, margin: [10, 0, 0, 5] as [number, number, number, number] });
+                    }
+                    if (allSkills.length > 0) {
+                        const processedSkills = await run(
+                            formData.jobDetails,
+                            allSkills.join('\n'),
+                            formData.apiKey
+                        );
+                        const processedSkillsArray = processedSkills.split('\n');
+                        let skillIndex = 0;
+                        for (const [category, subcategories] of Object.entries(formData.content.skills)) {
+                            const categorySkills = [];
+                            for (const subcategory of Object.keys(subcategories || {})) {
+                                if (skillIndex < processedSkillsArray.length) {
+                                    categorySkills.push({ text: processedSkillsArray[skillIndex], style: 'skillSubcategoryText' });
+                                    skillIndex++;
+                                }
+                            }
+                            if (categorySkills.length > 0) {
+                                skillsContent.push({ text: category, style: 'skillCategory' });
+                                skillsContent.push({ stack: categorySkills, margin: [10, 0, 0, 5] as [number, number, number, number] });
+                            }
                         }
                     }
                 }
