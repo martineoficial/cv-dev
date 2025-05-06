@@ -110,6 +110,7 @@ export default async function handler(
                 const skillsContent = [];
                 if (formData.content.skills) {
                     const allSkills = [];
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     for (const [category, subcategories] of Object.entries(formData.content.skills)) {
                         for (const [subcategory, skills] of Object.entries(subcategories || {})) {
                             if (skills && skills.length > 0) {
@@ -127,6 +128,7 @@ export default async function handler(
                         let skillIndex = 0;
                         for (const [category, subcategories] of Object.entries(formData.content.skills)) {
                             const categorySkills = [];
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
                             for (const subcategory of Object.keys(subcategories || {})) {
                                 if (skillIndex < processedSkillsArray.length) {
                                     categorySkills.push({ text: processedSkillsArray[skillIndex], style: 'skillSubcategoryText' });
