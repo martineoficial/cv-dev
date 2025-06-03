@@ -93,11 +93,21 @@ export default function CVPage() {
       const parsedData = JSON.parse(storedData);
       form.reset(parsedData);
     }
+
+    let debounceTimeout: NodeJS.Timeout;
+
     const subscription = form.watch(() => {
       localStorage.setItem('formData', JSON.stringify(form.getValues()));
-      generatePdf();
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        generatePdf();
+      }, 3000);
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+    };
   }, [form, generatePdf]);
 
   const handleDownload = useCallback(() => {
@@ -679,7 +689,7 @@ export default function CVPage() {
                                     </div>
                                   </div>
                                 )}
-                                
+
                                 <FormField
                                   control={form.control}
                                   name={`content.experience.${index}.description`}
