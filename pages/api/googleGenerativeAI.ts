@@ -8,10 +8,10 @@ export async function run(
 ) {
     const genAI = new GoogleGenerativeAI(process.env.API_KEY || apiKey);
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
-    Ananlise o texto abaixo, para que ele fique mais adequado a uma vaga de emprego;
+    Analise o texto abaixo, para que ele fique mais adequado a uma vaga de emprego;
     Modifique abaixo somente o textToModify para que corresponda aos requisitos do jobDetails;
     Não adicione coisas que não existam no textToModify, pois seria informação falsa;
     Nem deixe sugestões de como fnalizar, você deve finalizar o texto;
