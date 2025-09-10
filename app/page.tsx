@@ -1,5 +1,7 @@
 'use client'
-import initialSkillsOptions from '@/app/data/data.json';
+import devSkillsOptions from '@/app/data/dev.json';
+import marketingSkillsOptions from '@/app/data/marketing.json';
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +10,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { MultiSelect } from './components/multi-select/multi-select';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { MultiSelect } from './components/multi-select/multi-select';
+
 import { FormDataSchema } from './schemas/FormDataSchema';
+
+import type { Context } from '@/app/types/types';
+
 import Loading from './loading';
 
 export default function CVPage() {
@@ -40,6 +47,9 @@ export default function CVPage() {
       },
     },
   });
+
+  const [context, setContext] = useState<Context>({ context: 'Dev' });
+  const [initialSkillsOptions, setInitialSkillsOptions] = useState<{ [key: string]: { [key: string]: string[] } }>(devSkillsOptions);
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -224,6 +234,36 @@ export default function CVPage() {
                           </FormItem>
                         )}
                       />
+
+                      {/* <FormItem className="flex items-center space-x-2">
+                        <FormLabel>Contexto:</FormLabel>
+                        <Switch
+                          checked={isDevContext}
+                          onCheckedChange={(checked) => {
+                            setIsDevContext(checked);
+                            // Clear skills when switching context to prevent a mismatch of data
+                            form.setValue('content.skills', {});
+                          }}
+                        />
+                        <span className="text-sm font-medium">
+                          {isDevContext ? 'Dev' : 'Marketing'}
+                        </span>
+                      </FormItem> */}
+
+                      <FormItem className="flex items-center space-x-2">
+                        <FormLabel>Contexto:</FormLabel>
+                        <Switch
+                          checked={context.context === 'Dev'}
+                          onCheckedChange={() => {
+                            setContext({ context: 'Marketing' });
+                            setInitialSkillsOptions(marketingSkillsOptions);
+                            form.setValue('content.skills', {});
+                          }}
+                        />
+                        <span className="text-sm font-medium">
+                          {context.context.toString()}
+                        </span>
+                      </FormItem>
                     </form>
                   </Form>
                 </CardContent>
@@ -344,43 +384,49 @@ export default function CVPage() {
                         />
                       )}
 
-                      <FormField
-                        control={form.control}
-                        name="contactInfo.hasGithub"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormLabel>Possui GitHub:</FormLabel>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
+                      {
+                        context.context === 'Dev' &&
+                        (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="contactInfo.hasGithub"
+                              render={({ field }) => (
+                                <FormItem className="flex items-center space-x-2">
+                                  <FormLabel>Possui GitHub:</FormLabel>
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormItem>
+                              )}
                             />
-                          </FormItem>
-                        )}
-                      />
-                      {form.watch('contactInfo.hasGithub') && (
-                        <FormField
-                          control={form.control}
-                          name="contactInfo.githubUsername"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel>GitHub:</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Digite seu usuário do GitHub"
-                                  onChange={(e) => form.setValue('contactInfo.githubUsername', e.target.value)}
-                                  value={form.getValues('contactInfo.githubUsername')}
-                                  className="w-full"
-                                  type="text"
-                                  autoComplete="off"
-                                  required
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-
+                            {form.watch('contactInfo.hasGithub') && (
+                              <FormField
+                                control={form.control}
+                                name="contactInfo.githubUsername"
+                                render={() => (
+                                  <FormItem>
+                                    <FormLabel>GitHub:</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="Digite seu usuário do GitHub"
+                                        onChange={(e) => form.setValue('contactInfo.githubUsername', e.target.value)}
+                                        value={form.getValues('contactInfo.githubUsername')}
+                                        className="w-full"
+                                        type="text"
+                                        autoComplete="off"
+                                        required
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+                          </>
+                        )
+                      }
                     </form>
                   </Form>
                 </CardContent>

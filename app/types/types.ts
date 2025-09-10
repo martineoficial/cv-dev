@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { FormDataSchema } from "../schemas/FormDataSchema";
 
+export type Context = {
+    context: 'Dev' | 'Marketing'
+}
+
 export type Experience = {
     company: string;
     title: string;
