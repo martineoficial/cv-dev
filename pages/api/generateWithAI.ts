@@ -1,289 +1,154 @@
 import { FormDataSchema } from '@/app/schemas/FormDataSchema';
-import type { FormData } from '@/app/types/types';
 import { capitalizeAllWords } from '@/app/utils/capitalize';
-import fs from 'fs';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
-import PDFDocument from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
-import { Content } from 'pdfmake/interfaces';
+import PdfPrinter from 'pdfmake';
+import { TDocumentDefinitions, TFontDictionary, Content, Column } from 'pdfmake/interfaces';
 import { run } from './googleGenerativeAI';
 
-PDFDocument.vfs = pdfFonts.vfs;
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    if (req.method !== 'POST') return res.status(405).end();
 
-const fontsDir = path.join(process.cwd(), 'public/fonts');
-if (!fs.existsSync(fontsDir)) {
-    fs.mkdirSync(fontsDir, { recursive: true });
-    console.error("A pasta 'public/fonts' não foi encontrada. Por favor, crie uma pasta 'fonts' dentro da pasta 'public' e adicione os arquivos de fonte Roboto.");
-    console.error("Você pode baixar as fontes em: https://fonts.google.com/specimen/Roboto");
-} else {
-    const fontFiles = ['Roboto-Regular.ttf', 'Roboto-Medium.ttf', 'Roboto-Italic.ttf', 'Roboto-MediumItalic.ttf'];
-    fontFiles.forEach(file => {
-        if (!fs.existsSync(path.join(fontsDir, file))) {
-            console.error(`O arquivo de fonte '${file}' não foi encontrado na pasta 'public/fonts'.`);
-            console.error("Por favor, adicione os arquivos de fonte Roboto na pasta 'public/fonts'.");
-            console.error("Você pode baixar as fontes em: https://fonts.google.com/specimen/Roboto");
-        }
-    });
-}
+    try {
+        const validationResult = FormDataSchema.safeParse(req.body);
+        if (!validationResult.success) return res.status(400).json({ error: 'Dados inválidos' });
 
-export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
-    if (req.method === 'POST') {
-        try {
-            const validationResult = FormDataSchema.safeParse(req.body);
+        const formData = validationResult.data;
+        const pdfContent: Content[] = [];
 
-            if (!validationResult.success) {
-                console.error('Erro de validação:', validationResult.error);
-                return res.status(400).json({ error: 'Dados inválidos' });
+        const fonts: TFontDictionary = {
+            Roboto: {
+                normal: path.join(process.cwd(), 'public/fonts/Roboto-Regular.ttf'),
+                bold: path.join(process.cwd(), 'public/fonts/Roboto-Medium.ttf'),
+                italics: path.join(process.cwd(), 'public/fonts/Roboto-Italic.ttf'),
+                bolditalics: path.join(process.cwd(), 'public/fonts/Roboto-MediumItalic.ttf')
+            }
+        };
+
+        if (formData.apiKey && formData.jobDetails) {
+
+            if (formData.contactInfo.fullName) {
+                pdfContent.push({ text: capitalizeAllWords(formData.contactInfo.fullName), style: 'fullName' });
             }
 
-            const formData: FormData = validationResult.data;
+            if (formData.contactInfo.title) {
+                pdfContent.push({ text: formData.contactInfo.title.toUpperCase(), style: 'jobTitleHeader' });
+            }
 
-            const pdfContent: Content[] = [];
+            const contactLinks: Content[] = [];
 
-            if (formData.apiKey && formData.jobDetails) {
-                if (formData.contactInfo.fullName) {
+            if (formData.contactInfo.email) {
+                contactLinks.push({ text: formData.contactInfo.email, link: `mailto:${formData.contactInfo.email}` });
+            }
+
+            if (formData.contactInfo.phone) {
+                const cleanPhone = formData.contactInfo.phone.replace(/\D/g, '');
+                contactLinks.push({ text: formData.contactInfo.phone, link: `https://wa.me/${cleanPhone}` });
+            }
+
+            if (formData.contactInfo.linkedinUsername) {
+                contactLinks.push({
+                    text: 'LinkedIn',
+                    link: `https://linkedin.com/in/${formData.contactInfo.linkedinUsername}`
+                });
+            }
+
+            if (formData.contactInfo.githubUsername) {
+                contactLinks.push({
+                    text: 'GitHub',
+                    link: `https://github.com/${formData.contactInfo.githubUsername}`
+                });
+            }
+
+            const contactRow: Content = {
+                text: contactLinks.reduce((acc: Content[], curr, idx) => {
+                    acc.push(curr);
+                    if (idx < contactLinks.length - 1) acc.push('  •  ');
+                    return acc;
+                }, []),
+                style: 'contacts',
+                margin: [0, 5, 0, 15]
+            };
+            pdfContent.push(contactRow);
+
+            const addSection = (title: string) => {
+                pdfContent.push({ text: title, style: 'sectionTitle' });
+                pdfContent.push({
+                    canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: '#bdc3c7' }],
+                    margin: [0, 0, 0, 8]
+                });
+            };
+
+            const sobreMim = formData.content.sections['Sobre mim'];
+            if (sobreMim) {
+                addSection('RESUMO PROFISSIONAL');
+                const opt = await run(formData.jobDetails, sobreMim, formData.apiKey);
+                pdfContent.push({ text: opt, style: 'sectionContent' });
+            }
+
+            if (formData.content.skills) {
+                const skillsEntries = Object.entries(formData.content.skills).map(([category, sub]) => {
+                    const subs = Object.entries(sub || {}).map(([name, list]) => `${name}: ${list?.join(', ')}`);
+                    return `${category}: ${subs.join('; ')}`;
+                }).join(' | ');
+
+                addSection('HABILIDADES TÉCNICAS');
+                const optSkills = await run(formData.jobDetails, skillsEntries, formData.apiKey);
+                pdfContent.push({ text: optSkills, style: 'sectionContent' });
+            }
+
+            if (formData.content.experience && formData.content.experience.length > 0) {
+                addSection('EXPERIÊNCIA PROFISSIONAL');
+                for (const exp of formData.content.experience) {
+                    const start = typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate;
+                    const end = exp.isCurrent ? 'Atual' : (typeof exp.endDate === 'object' && exp.endDate ? `${exp.endDate.month}/${exp.endDate.year}` : exp.endDate);
+
                     pdfContent.push({
-                        text: capitalizeAllWords(formData.contactInfo.fullName),
-                        style: 'fullName',
+                        columns: [
+                            { text: exp.company || '', style: 'expCompany', width: '*' } as Column,
+                            { text: `${start} - ${end}`, style: 'dateRange', width: 'auto' } as Column
+                        ]
                     });
-                }
 
-                if (formData.contactInfo.title) {
-                    pdfContent.push({
-                        text: capitalizeAllWords(formData.contactInfo.title),
-                        style: 'title',
-                    });
-                }
+                    pdfContent.push({ text: exp.title || '', style: 'expTitle', margin: [0, 2, 0, 5] });
 
-                if (formData.contactInfo.email) {
-                    pdfContent.push({
-                        text: formData.contactInfo.email,
-                        style: 'contacts',
-                        link: `mailto:${formData.contactInfo.email}`,
-                    });
-                }
-
-                if (formData.contactInfo.phone) {
-                    pdfContent.push({
-                        text: formData.contactInfo.phone,
-                        style: 'contacts',
-                        link: formData.contactInfo.phoneIsWhatsapp
-                            ? `https://wa.me/${formData.contactInfo.phone}`
-                            : `tel:${formData.contactInfo.phone}`,
-                    });
-                }
-
-                if (formData.contactInfo.linkedinUsername) {
-                    pdfContent.push({
-                        text: `LinkedIn: ${formData.contactInfo.linkedinUsername}`,
-                        style: 'contacts',
-                        link: `https://www.linkedin.com/in/${formData.contactInfo.linkedinUsername}`,
-                    });
-                }
-
-                if (formData.contactInfo.githubUsername) {
-                    pdfContent.push({
-                        text: `GitHub: ${formData.contactInfo.githubUsername}`,
-                        style: 'contacts',
-                        link: `https://github.com/${formData.contactInfo.githubUsername}`,
-                    });
-                }
-
-                if (formData.content.sections['Sobre mim']) {
-                    pdfContent.push({
-                        text: 'Sobre mim',
-                        style: 'sectionTitle',
-                    });
-                    pdfContent.push({
-                        text: await run(
-                            formData.jobDetails,
-                            formData.content.sections['Sobre mim'],
-                            formData.apiKey),
-                        style: 'sectionContent',
-                    });
-                }
-
-                if (formData.content.skills) {
-                    const skillsInput = Object.entries(formData.content.skills).map(([category, subcategories]) => {
-                        const subcategorySkills = Object.entries(subcategories || {}).map(([subcategory, skills]) => {
-                            return skills && skills.length > 0 ? `${subcategory}: ${skills.join(', ')}` : null;
-                        }).filter(Boolean);
-                        return subcategorySkills.length > 0 ? `${category}: ${subcategorySkills.join('; ')}` : null;
-                    }).filter(Boolean).join('\n');
-
-                    const enhancedSkillsText = await run(formData.jobDetails, skillsInput, formData.apiKey);
-
-                    if (enhancedSkillsText) {
-                        pdfContent.push({ text: 'Habilidades Técnicas', style: 'sectionHeader' });
-                        pdfContent.push({ text: enhancedSkillsText, style: 'sectionContent' });
+                    if (exp.description) {
+                        const optExp = await run(formData.jobDetails, exp.description, formData.apiKey);
+                        pdfContent.push({ text: optExp, style: 'sectionContent' });
                     }
                 }
-
-                if (formData.content.experience && formData.content.experience.length > 0) {
-                    pdfContent.push({ text: 'Experiência', style: 'sectionTitle' });
-                    formData.content.experience.forEach((exp) => {
-                        const expContent = [];
-                        if (exp.company) {
-                            expContent.push({ text: exp.company, style: 'expCompany' });
-                        }
-                        if (exp.title) {
-                            expContent.push({ text: exp.title, style: 'expTitle' });
-                        }
-
-                        if (exp.startDate && exp.isCurrent) {
-                            expContent.push({ 
-                                text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - Atual`, 
-                                style: 'dateRange'
-                            });
-                        } else if (exp.startDate && exp.endDate) {
-                            expContent.push({ 
-                                text: `${typeof exp.startDate === 'object' ? `${exp.startDate.month}/${exp.startDate.year}` : exp.startDate} - ${typeof exp.endDate === 'object' ? `${exp.endDate.month}/${exp.endDate.year}` : exp.endDate}`, 
-                                style: 'dateRange'
-                            });
-                        } else if (exp.startDate) {
-                            expContent.push({ text: `${exp.startDate.month} ${exp.startDate.year}`, style: 'dateRange' });
-                        }
-                        
-                        if (exp.description) {
-                            expContent.push({ text: exp.description, style: 'sectionContent' });
-                        }
-                        pdfContent.push({ stack: expContent, margin: [0, 0, 0, 10] });
-                    });
-                }
-
-                if (formData.content.education && formData.content.education.length > 0) {
-                    pdfContent.push({ text: 'Educação', style: 'sectionTitle' });
-                    formData.content.education.forEach((edu) => {
-                        const eduContent = [];
-                        if (edu.institution) {
-                            eduContent.push({ text: edu.institution, style: 'expCompany' });
-                        }
-                        if (edu.degree) {
-                            eduContent.push({ text: edu.degree, style: 'expTitle' });
-                        }
-                        if (edu.startDate && edu.endDate) {
-                            eduContent.push({
-                                text: `${typeof edu.startDate === 'object' ? `${edu.startDate.month}/${edu.startDate.year}` : edu.startDate} - ${typeof edu.endDate === 'object' ? `${edu.endDate.month}/${edu.endDate.year}` : edu.endDate}`,
-                                style: 'dateRange'
-                            });
-                        } else if (edu.startDate) {
-                            eduContent.push({ text: `${edu.startDate.month} ${edu.startDate.year}`, style: 'dateRange' });
-                        }
-                        pdfContent.push({ stack: eduContent, margin: [0, 0, 0, 10] });
-                    });
-                }
-
-                if (formData.content.sections['Soft Skills']) {
-                    pdfContent.push({
-                        text: 'Soft Skills',
-                        style: 'sectionTitle'
-                    });
-                    pdfContent.push({
-                        text: await run(
-                            formData.jobDetails,
-                            formData.content.sections['Soft Skills'],
-                            formData.apiKey
-                        ),
-                        style: 'sectionContent',
-                    });
-                }
-
-                if (formData.content.sections['Diferenciais']) {
-                    pdfContent.push({
-                        text: 'Diferenciais',
-                        style: 'sectionTitle'
-                    });
-                    pdfContent.push({
-                        text: await run(
-                            formData.jobDetails,
-                            formData.content.sections['Diferenciais'],
-                            formData.apiKey
-                        ),
-                        style: 'sectionContent',
-                    });
-                }
-
-                const pdfDoc = PDFDocument.createPdf({
-                    content: pdfContent,
-                    styles: {
-                        fullName: {
-                            fontSize: 20,
-                            bold: true,
-                            margin: [0, 0, 0, 5],
-                        },
-                        title: {
-                            fontSize: 16,
-                            italics: true,
-                            margin: [0, 0, 0, 10],
-                        },
-                        contacts: {
-                            fontSize: 12,
-                            margin: [0, 0, 0, 5],
-                            color: '#555',
-                        },
-                        sectionTitle: {
-                            fontSize: 14,
-                            bold: true,
-                            margin: [0, 10, 0, 5],
-                        },
-                        sectionContent: {
-                            fontSize: 12,
-                            margin: [0, 0, 0, 10],
-                        },
-                        sectionHeader: {
-                            fontSize: 14,
-                            bold: true,
-                            margin: [0, 10, 0, 5],
-                        },
-                        skillCategory: {
-                            fontSize: 12,
-                            bold: true,
-                            margin: [0, 10, 0, 5],
-                        },
-                        skillSubcategoryText: {
-                            fontSize: 12,
-                            margin: [0, 0, 0, 5],
-                        },
-                        expCompany: {
-                            fontSize: 12,
-                            bold: true,
-                            margin: [0, 0, 0, 5],
-                        },
-                        expTitle: {
-                            fontSize: 12,
-                            italics: true,
-                            margin: [0, 0, 0, 5],
-                        },
-                        dateRange: {
-                            fontSize: 12,
-                            margin: [0, 0, 0, 5],
-                            color: '#777',
-                        },
-                    },
-                    defaultStyle: {
-                        fontSize: 11,
-                        color: '#333',
-                    },
-                });
-
-                pdfDoc.getBase64((data: string) => {
-                    const buffer = Buffer.from(data, 'base64');
-                    res.setHeader('Content-Type', 'application/pdf');
-                    res.setHeader('Content-Disposition', 'attachment; filename=curriculo.pdf');
-                    res.send(buffer);
-                });
             }
-        } catch (error) {
-            console.error('Erro ao gerar o PDF:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            res.status(500).json({ error: 'Erro ao gerar o PDF', details: errorMessage });
+
+            const docDefinition: TDocumentDefinitions = {
+                content: pdfContent,
+                styles: {
+                    fullName: { fontSize: 22, bold: true, color: '#1a2a3a' },
+                    jobTitleHeader: { fontSize: 12, bold: true, color: '#34495e', margin: [0, 2, 0, 0] },
+                    contacts: { fontSize: 10, color: '#1a2a3a', decoration: 'underline' },
+                    sectionTitle: { fontSize: 11, bold: true, color: '#1a2a3a', margin: [0, 10, 0, 2] },
+                    sectionContent: { fontSize: 10, margin: [0, 0, 0, 10], lineHeight: 1.3, alignment: 'justify' },
+                    expCompany: { fontSize: 11, bold: true },
+                    expTitle: { fontSize: 10, bold: true, italics: true, color: '#444' },
+                    dateRange: { fontSize: 9, color: '#666' }
+                },
+                defaultStyle: { font: 'Roboto' },
+                pageMargins: [40, 40, 40, 40]
+            };
+
+            const printer = new PdfPrinter(fonts);
+            const pdfDoc = printer.createPdfKitDocument(docDefinition);
+
+            const chunks: Uint8Array[] = [];
+            pdfDoc.on('data', (chunk: Uint8Array) => chunks.push(chunk));
+            pdfDoc.on('end', () => {
+                const result = Buffer.concat(chunks);
+                res.setHeader('Content-Type', 'application/pdf');
+                res.send(result);
+            });
+            pdfDoc.end();
         }
-    } else {
-        res.setHeader('Allow', ['POST']);
-        res.status(405).end(`Method ${req.method} Not Allowed`);
+    } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        res.status(500).json({ error: 'Erro interno no servidor' });
     }
 }

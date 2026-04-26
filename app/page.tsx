@@ -254,14 +254,19 @@ export default function CVPage() {
                         <FormLabel>Contexto:</FormLabel>
                         <Switch
                           checked={context.context === 'Dev'}
-                          onCheckedChange={() => {
-                            setContext({ context: 'Marketing' });
-                            setInitialSkillsOptions(marketingSkillsOptions);
-                            form.setValue('content.skills', {});
+                          onCheckedChange={(isDev) => {
+                            if (isDev) {
+                              setContext({ context: 'Dev' });
+                              setInitialSkillsOptions(devSkillsOptions);
+                            } else {
+                              setContext({ context: 'Marketing' });
+                              setInitialSkillsOptions(marketingSkillsOptions);
+                            }
+                              form.setValue('content.skills', {});
                           }}
                         />
                         <span className="text-sm font-medium">
-                          {context.context.toString()}
+                          {context.context}
                         </span>
                       </FormItem>
                     </form>

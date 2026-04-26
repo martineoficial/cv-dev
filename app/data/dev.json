@@ -1,19 +1,20 @@
 {
     "Frontend": {
         "Linguagens": [
-            "JavaScript",
-            "ES6+",
+            "JavaScript (ES6+)",
             "TypeScript",
-            "HTML5",
+            "HTML5"
+        ],
+        "Estilização e Pré-processadores": [
             "CSS3",
             "SASS",
             "LESS",
             "Flexbox",
-            "Style Components",
             "CSS Modules"
         ],
         "Frameworks e Bibliotecas": [
             "React.js",
+            "React Native",
             "Vue.js",
             "Angular",
             "Next.js",
@@ -25,11 +26,9 @@
             "Redux",
             "Vuex"
         ],
-        "Performance": [
+        "Conceitos de Performance e SEO": [
             "Lazy Loading",
-            "Code Splitting"
-        ],
-        "Acessibilidade e SEO": [
+            "Code Splitting",
             "Acessibilidade (WCAG)",
             "SEO (Search Engine Optimization)"
         ]
@@ -37,36 +36,37 @@
     "Backend": {
         "Linguagens": [
             "Java",
-            "Spring Boot",
             "Node.js",
-            "Express.js",
             "Python",
-            "PHP"
+            "PHP",
+            "Golang"
         ],
-        "APIs": [
+        "Frameworks": [
+            "Spring Boot",
+            "Express.js"
+        ],
+        "APIs e Protocolos": [
             "RESTful",
             "GraphQL"
         ],
-        "Autenticação": [
+        "Autenticação e Segurança": [
             "JWT",
             "OAuth 2.0"
         ],
-        "Arquitetura": [
+        "Arquitetura e Mensageria": [
             "Microservices",
             "Serverless",
-            "Monólitos"
-        ],
-        "Messageria": [
+            "Monólitos",
             "Kafka",
             "RabbitMQ"
         ]
     },
     "Banco de Dados": {
-        "Relacionais": [
+        "Relacionais (SQL)": [
             "PostgreSQL",
             "MySQL"
         ],
-        "NoSQL": [
+        "Não Relacionais (NoSQL)": [
             "MongoDB",
             "Redis"
         ],
@@ -76,24 +76,27 @@
             "Hibernate"
         ]
     },
-    "DevOps & Ferramentas": {
+    "DevOps & Infraestrutura": {
         "Versionamento": [
             "Git",
             "GitHub",
             "GitLab",
             "Bitbucket"
         ],
-        "Containers e CI/CD": [
+        "Containers e Orquestração": [
             "Docker",
-            "Kubernetes",
-            "GitHub Actions",
-            "Jenkins"
+            "Kubernetes"
         ],
-        "Cloud": [
+        "CI/CD": [
+            "GitHub Actions",
+            "Jenkins",
+            "GitLab CI"
+        ],
+        "Cloud Providers": [
             "AWS",
             "Azure"
         ],
-        "Construção e automação": [
+        "Build Tools e Package Managers": [
             "Webpack",
             "Babel",
             "NPM",
@@ -101,16 +104,16 @@
         ]
     },
     "Testes & Qualidade": {
-        "Unitários": [
+        "Unitários e Mocking": [
             "Jest",
             "JUnit",
             "PyTest"
         ],
-        "Integração e UI": [
+        "E2E e Integração": [
             "Cypress",
             "Playwright"
         ],
-        "Monitoramento": [
+        "Observabilidade": [
             "Prometheus",
             "Grafana"
         ]
